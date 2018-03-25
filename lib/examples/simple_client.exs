@@ -30,6 +30,11 @@ options = %{cluster: cluster, encrypted: true, secret: secret}
 
 SimpleClient.subscribe(pid, "my-channel")
 
+# Private channels are also supported:
+# Please note, secret has to be provided and client events needs to be enabled
+# in Pusher app settings.
+SimpleClient.subscribe(pid, "private-channel")
+
 SimpleClient.trigger(pid, "my-channel", "first-event", %{name: "Tomas Koutsky"})
 
 # When "second-event" callback is being triggered:
