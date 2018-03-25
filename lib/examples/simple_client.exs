@@ -3,11 +3,8 @@ defmodule SimpleClient do
 
   use Pushex
 
-  @app_key "92903f411439788e18e5"
-  @options %{cluster: "eu", encrypted: true, secret: "442fb83444a53d33f3bf"}
-
   def start_link(app_key, options) do
-    Pushex.Socket.start_link(@app_key, @options, __MODULE__)
+    Pushex.Socket.start_link(app_key, options, __MODULE__)
   end
 
   def handle_event({"first-event", frame}) do
