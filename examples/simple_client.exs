@@ -25,9 +25,10 @@ cluster = Application.get_env(:simple_client, :pusher_cluster)
 
 options = %{cluster: cluster, encrypted: true, secret: secret}
 
-# App usage:
+# Initialization:
 {:ok, pid} = SimpleClient.start_link(app_key, options)
 
+# Subscription to a channel:
 SimpleClient.subscribe(pid, "my-channel")
 
 # Private channels are also supported:
@@ -35,9 +36,10 @@ SimpleClient.subscribe(pid, "my-channel")
 # in Pusher app settings.
 SimpleClient.subscribe(pid, "private-channel")
 
-SimpleClient.trigger(pid, "my-channel", "first-event", %{name: "Tomas Koutsky"})
+# Triggers can be performed only on private channels:
+SimpleClient.trigger(pid, "private-channel", "first-event", %{name: "Tomas Koutsky"})
 
-# When "second-event" callback is being triggered:
+# When "first-event" callback is being triggered:
 # %Pushex.Data.Frame{
 #   channel: "private-test",
 #   data: "{\r\n  \"name\": \"John\",\r\n  \"message\": \"Hello\"\r\n}",

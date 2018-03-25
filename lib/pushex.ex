@@ -8,7 +8,7 @@ defmodule Pushex do
   alias Pushex.Data.{State, Frame, SocketInfo, Options, Url}
   alias Pushex.Helpers
 
-  @callback handle_event({String.t(), term}) :: {:ok, term}
+  @callback handle_event({String.t(), term}) :: {:noreply, term}
 
   defmacro __using__(_opts) do
     quote do
