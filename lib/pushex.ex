@@ -8,7 +8,7 @@ defmodule Pushex do
   alias Pushex.Data.{State, Frame, SocketInfo, Options, Url}
   alias Pushex.Helpers
 
-  @callback handle_event({String.t, term}) :: {:ok, term}
+  @callback handle_event({String.t(), term}) :: {:ok, term}
 
   defmacro __using__(_opts) do
     quote do
@@ -18,17 +18,17 @@ defmodule Pushex do
       def subscribe(pid, channel) do
         GenServer.cast(pid, {:subscribe, channel})
       end
-    
+
       def trigger(pid, channel, event, data) do
         GenServer.cast(pid, {:trigger, channel, event, data})
       end
 
       def handle_event({event, frame}) do
-        Logger.error "No handle_event/1 clause in #{__MODULE__} provided for #{inspect event}"
+        Logger.error("No handle_event/1 clause in #{__MODULE__} provided for #{inspect(event)}")
         {:noreply, frame}
       end
 
-      defoverridable [handle_event: 1]
+      defoverridable handle_event: 1
     end
   end
 
@@ -69,7 +69,7 @@ defmodule Pushex do
   end
 
   def handle_info({:gun_ws_upgrade, _conn_pid, :ok, _headers}, state) do
-    IO.puts :gun_ws_upgrade
+    IO.puts(:gun_ws_upgrade)
     {:noreply, state}
   end
 
@@ -78,11 +78,11 @@ defmodule Pushex do
 
     case frame.event do
       "pusher:connection_established" ->
-        Logger.debug "pusher:connection_established"
+        Logger.debug("pusher:connection_established")
         {:noreply, %{state | socket_info: SocketInfo.decode!(frame.data)}}
 
       "pusher_internal:subscription_succeeded" ->
-        Logger.debug "pusher_internal:subscription_succeeded"
+        Logger.debug("pusher_internal:subscription_succeeded")
         {:noreply, state}
 
       _ ->
@@ -92,7 +92,7 @@ defmodule Pushex do
   end
 
   def handle_info(params, state) do
-    Logger.debug "pusher:event #{inspect params}"
+    Logger.debug(fn -> "pusher:event #{inspect(params)}" end)
     {:noreply, state}
   end
 
@@ -112,6 +112,7 @@ defmodule Pushex do
       stacktrace = System.stacktrace()
       reason = Exception.normalize(:error, payload, stacktrace)
       {:"$EXIT", {reason, stacktrace}}
+
     :exit, payload ->
       {:"$EXIT", payload}
   end

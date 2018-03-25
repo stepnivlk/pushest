@@ -25,8 +25,10 @@ defmodule Pushex.Helpers do
   def url(app_key, %{cluster: cluster, encrypted: encrypted}) do
     %Url{
       domain: "ws-#{cluster}.pusher.com" |> to_charlist,
-      path: "/app/#{app_key}?protocol=#{@protocol}&client=pushex&version=0.1.0&flash=false" |> to_charlist,
-      port: (if encrypted, do: 443, else: 80)
+      path:
+        "/app/#{app_key}?protocol=#{@protocol}&client=pushex&version=0.1.0&flash=false"
+        |> to_charlist,
+      port: if(encrypted, do: 443, else: 80)
     }
   end
 end

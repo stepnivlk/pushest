@@ -8,12 +8,12 @@ defmodule SimpleClient do
   end
 
   def handle_event({"first-event", frame}) do
-    IO.inspect frame
+    IO.inspect(frame)
     {:noreply, frame}
   end
 
   def handle_event({"second-event", frame}) do
-    IO.inspect frame
+    IO.inspect(frame)
     {:noreply, frame}
   end
 end
