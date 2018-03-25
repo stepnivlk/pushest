@@ -1,14 +1,17 @@
-defmodule Pushex.Structs.Frame do
+defmodule Pushex.Data.Frame do
   @moduledoc false
+
+  alias Pushex.Data.SubscriptionData
 
   defstruct [:channel, :event, :data]
 
-  def subscription(channel, auth) do
+  def subscription(channel, auth, channel_data \\ nil) do
     %__MODULE__{
       event: "pusher:subscribe",
-      data: %{
+      data: %SubscriptionData{
         channel: channel,
-        auth: auth
+        auth: auth,
+        channel_data: channel_data
       }
     }
   end

@@ -1,4 +1,4 @@
-defmodule Pushex.Structs.Options do
+defmodule Pushex.Data.Options do
   @moduledoc false
 
   defstruct [:cluster, :encrypted, :secret]

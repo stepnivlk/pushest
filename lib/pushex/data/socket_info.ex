@@ -1,4 +1,4 @@
-defmodule Pushex.Structs.SocketInfo do
+defmodule Pushex.Data.SocketInfo do
   @moduledoc false
 
   defstruct [:socket_id, :activity_timeout]

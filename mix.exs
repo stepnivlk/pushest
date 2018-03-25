@@ -4,7 +4,7 @@ defmodule Pushex.MixProject do
   def project do
     [
       app: :pushex,
-      version: "0.1.0",
+      version: "0.1.2",
       elixir: "~> 1.6",
       start_permanent: Mix.env() == :prod,
       deps: deps()
@@ -14,15 +14,15 @@ defmodule Pushex.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:logger]
+      extra_applications: [:logger, :gun]
     ]
   end
 
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:websockex, "~> 0.4.1"},
       {:poison, "~> 3.1"},
+      {:gun, "~> 1.0.0-pre.4b"},
       {:credo, "~> 0.9.0-rc1", only: [:dev, :test], runtime: false}
     ]
   end
