@@ -1,12 +1,13 @@
-alias Pushex.Structs.{SocketInfo, Options, Url}
+alias Pushex.Data.{SocketInfo, Options, Url}
 
-defmodule Pushex.Structs.State do
+defmodule Pushex.Data.State do
   @moduledoc false
   defstruct app_key: "",
-            channels: [],
+            channels: %{},
             events: %{},
             socket_info: %SocketInfo{},
             options: %Options{},
             url: %Url{},
-            conn_pid: nil
+            conn_pid: nil,
+            module: nil
 end

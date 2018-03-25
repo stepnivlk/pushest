@@ -1,4 +1,4 @@
-defmodule Pushex.Structs.Url do
+defmodule Pushex.Data.Url do
   @moduledoc false
 
   defstruct [:domain, :path, :port]

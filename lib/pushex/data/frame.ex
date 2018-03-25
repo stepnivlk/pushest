@@ -1,7 +1,7 @@
-defmodule Pushex.Structs.Frame do
+defmodule Pushex.Data.Frame do
   @moduledoc false
 
-  alias Pushex.Structs.SubscriptionData
+  alias Pushex.Data.SubscriptionData
 
   defstruct [:channel, :event, :data]
 

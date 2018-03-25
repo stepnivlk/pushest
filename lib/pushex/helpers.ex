@@ -1,7 +1,7 @@
 defmodule Pushex.Helpers do
   @moduledoc false
 
-  alias Pushex.Structs.{State, Options, SocketInfo, Url}
+  alias Pushex.Data.{State, Options, SocketInfo, Url}
 
   def auth(
         %State{
