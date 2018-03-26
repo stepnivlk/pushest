@@ -7,15 +7,15 @@
 ## TODO
 - [x] Event scoping
 - [ ] Presence
-- [x] usubscribe
-- [x] channels
-- [x] Don't generate auth for public channels
+- [x] Unsubscribe method
+- [x] Channels list method
+- [x] Auth token generated only for private channels
 - [ ] Tests
 - [x] Handle `pusher:error`
 - [ ] Documentation
 - [ ] :gun.conn supervision
 - [x] start_link/3 - opts to Pushex
-- [x] Named process
+- [x] Named process option
 - [x] Propagate app version to url
 - [ ] Overall error handling
 - [ ] Publish to hex.pm
