@@ -3,25 +3,31 @@ defmodule SimpleClient do
 
   use Pushex
 
-  def start_link(app_key, options) do
-    Pushex.Socket.start_link(app_key, options, __MODULE__)
+  def start_link(app_key, app_options, options \\ []) do
+    Pushex.start_link(app_key, app_options, __MODULE__, options)
   end
 
-  def handle_event({"first-event", frame}) do
+  def handle_event({:ok, "public-channel", "first-event"}, frame) do
+    # Process frame here
     IO.inspect(frame)
-    {:noreply, frame}
   end
 
-  def handle_event({"second-event", frame}) do
+  def handle_event({:ok, "private-channel", "second-event"}, frame) do
+    # Process frame here
     IO.inspect(frame)
-    {:noreply, frame}
+  end
+
+  # In case when there is an error on event. We can catch error message.
+  def handle_event({:error, _msg}, frame) do
+    # Process error here
+    IO.inspect(frame)
   end
 end
 
-# Config:
-app_key = Application.get_env(:simple_client, :pusher_app_key)
-secret = Application.get_env(:simple_client, :pusher_secret)
-cluster = Application.get_env(:simple_client, :pusher_cluster)
+# # Config:
+app_key = System.get_env("PUSHER_APP_KEY")
+secret = System.get_env("PUSHER_SECRET")
+cluster = System.get_env("PUSHER_CLUSTER")
 
 options = %{cluster: cluster, encrypted: true, secret: secret}
 

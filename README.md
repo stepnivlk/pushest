@@ -7,14 +7,17 @@
 ## TODO
 - [x] Event scoping
 - [ ] Presence
-- [ ] usubscribe
-- [ ] channels
+- [x] usubscribe
+- [x] channels
+- [x] Don't generate auth for public channels
 - [ ] Tests
-- [ ] Error handling
+- [x] Handle `pusher:error`
 - [ ] Documentation
-- [ ] :gun supervision
-- [ ] start_link/3 - opts to Pushex
-- [ ] Named process
+- [ ] :gun.conn supervision
+- [x] start_link/3 - opts to Pushex
+- [x] Named process
+- [x] Propagate app version to url
+- [ ] Overall error handling
 - [ ] Publish to hex.pm
 
 ## Usage
@@ -98,4 +101,3 @@ end
 Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
 and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
 be found at [https://hexdocs.pm/pushex](https://hexdocs.pm/pushex).
-
