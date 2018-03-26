@@ -40,8 +40,11 @@ defmodule Pushex do
 
   def init(state = %State{url: %Url{domain: domain, path: path, port: port}}) do
     {:ok, conn_pid} = :gun.open(domain, port)
-    {:ok, :http} = :gun.await_up(conn_pid)
-    :gun.ws_upgrade(conn_pid, path)
+
+    case :gun.await_up(conn_pid) do
+      {:ok, :http} -> :gun.ws_upgrade(conn_pid, path) 
+      {:error, msg} -> raise "Connection init error #{inspect msg}"
+    end
 
     {:ok, %{state | conn_pid: conn_pid}}
   end
@@ -83,10 +86,10 @@ defmodule Pushex do
 
       "pusher_internal:subscription_succeeded" ->
         Logger.debug("pusher_internal:subscription_succeeded")
-        {:noreply, state}
+        {:noreply, %{state | channels: [frame.channel | state.channels]}}
 
       _ ->
-        try_callback(module, :handle_event, [{frame.event, frame}])
+        try_callback(module, :handle_event, [{:ok, frame.channel, frame.event}, frame])
         {:noreply, state}
     end
   end
