@@ -6,6 +6,7 @@
 - [ ] Event scoping
 - [ ] Presence
 - [ ] Tests
+- [ ] Error handling
 - [ ] Documentation
 - [ ] :gun supervision
 - [ ] start_link/3 - opts to Pushex
