@@ -9,7 +9,7 @@
 - [ ] Presence
 - [x] Unsubscribe method
 - [x] Channels list method
-- [x] Auth token generated only for private channels
+- [x] Auth token generated only for private/presence channels
 - [ ] Tests
 - [x] Handle `pusher:error`
 - [ ] Documentation
