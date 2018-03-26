@@ -5,7 +5,7 @@
 **WIP**
 
 ## TODO
-- [ ] Event scoping
+- [x] Event scoping
 - [ ] Presence
 - [ ] usubscribe
 - [ ] channels
