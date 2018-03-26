@@ -1,5 +1,7 @@
 # Pushex
 
+[![Ebert](https://ebertapp.io/github/stepnivlk/pushex.svg)](https://ebertapp.io/github/stepnivlk/pushex)
+
 **WIP**
 
 ## TODO
