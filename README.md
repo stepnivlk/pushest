@@ -125,9 +125,9 @@ NamedClient.unsubscribe("public-channel")
 It's up to a developer implementing given callback to decode data payload.
 ```elixir
 %Pushex.Data.Frame{
-  channel: "private-test",
+  channel: "private-channel",
   data: "{\r\n  \"name\": \"John\",\r\n  \"message\": \"Hello\"\r\n}",
-  event: "first-event"
+  event: "second-event"
 }
 ```
 
