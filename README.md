@@ -1,6 +1,21 @@
 # Pushex
 
+[![Ebert](https://ebertapp.io/github/stepnivlk/pushex.svg)](https://ebertapp.io/github/stepnivlk/pushex)
+
 **WIP**
+
+## TODO
+- [ ] Event scoping
+- [ ] Presence
+- [ ] usubscribe
+- [ ] channels
+- [ ] Tests
+- [ ] Error handling
+- [ ] Documentation
+- [ ] :gun supervision
+- [ ] start_link/3 - opts to Pushex
+- [ ] Named process
+- [ ] Publish to hex.pm
 
 ## Usage
 ```elixir
@@ -9,18 +24,32 @@ defmodule SimpleClient do
 
   use Pushex
 
-  def start_link(app_key, options) do
-    Pushex.Socket.start_link(app_key, options, __MODULE__)
+  def start_link(app_key, app_options, options \\ []) do
+    Pushex.start_link(app_key, app_options, __MODULE__, options)
   end
 
-  def handle_event({"first-event", frame}) do
-    IO.inspect(frame)
-    {:noreply, frame}
+  # Global event handling callbacks. Gets triggered whenever
+  # there is a given event on any subscribed channel
+  def handle_event({:ok, "first-event"}, frame) do
+    # Process frame here
+    {:ok, frame}
   end
 
-  def handle_event({"second-event", frame}) do
-    IO.inspect(frame)
-    {:noreply, frame}
+  def handle_event({:ok, "second-event"}, frame) do
+    # Process frame here
+    {:ok, frame}
+  end
+  
+  # Local event handling callback. Scoped to specific channel name.
+  def handle_event({:ok, "private-channel", "second-event"}, frame) do
+    # Process frame here
+    {:ok, frame}
+  end
+  
+  # In case when there is an error on event. We can catch error message.
+  def handle_event({:error, msg}) do
+    # Process error here
+    {:error, msg}
   end
 end
 
