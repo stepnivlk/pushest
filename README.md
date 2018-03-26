@@ -26,18 +26,18 @@ defmodule SimpleClient do
 
   # Global event handling callbacks. Gets triggered whenever
   # there is a given event on any subscribed channel
-  def handle_event({:ok, "first-event"} frame) do
+  def handle_event({:ok, "first-event"}, frame) do
     # Process frame here
     {:ok, frame}
   end
 
-  def handle_event({:ok, "second-event"} frame) do
+  def handle_event({:ok, "second-event"}, frame) do
     # Process frame here
     {:ok, frame}
   end
   
   # Local event handling callback. Scoped to specific channel name.
-  def handle_event({:ok, "private-channel", "second-event"} frame) do
+  def handle_event({:ok, "private-channel", "second-event"}, frame) do
     # Process frame here
     {:ok, frame}
   end
