@@ -7,6 +7,8 @@
 ## TODO
 - [ ] Event scoping
 - [ ] Presence
+- [ ] usubscribe
+- [ ] channels
 - [ ] Tests
 - [ ] Error handling
 - [ ] Documentation
