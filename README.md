@@ -19,6 +19,7 @@
 - [x] Propagate app version to url
 - [ ] Overall error handling
 - [ ] Publish to hex.pm
+- [ ] Fallback to REST when triggering on a public channel
 
 ## Usage
 ```elixir
