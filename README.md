@@ -21,7 +21,7 @@ defmodule SimpleClient do
   use Pushex
 
   def start_link(app_key, app_options, options \\ []) do
-    Pushex.start_link(app_key, options, __MODULE__, options)
+    Pushex.start_link(app_key, app_options, __MODULE__, options)
   end
 
   # Global event handling callbacks. Gets triggered whenever
