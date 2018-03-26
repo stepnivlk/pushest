@@ -24,8 +24,6 @@
 ## Usage
 ```elixir
 defmodule SimpleClient do
-  @moduledoc false
-
   use Pushex
 
   def start_link(app_key, app_options, options \\ []) do
@@ -79,8 +77,6 @@ SimpleClient.unsubscribe(pid, "public-channel")
 ## Usage with registered name
 ```elixir
 defmodule NamedClient do
-  @moduledoc false
-
   use Pushex
 
   def start_link(app_key, app_options) do
