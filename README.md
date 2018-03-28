@@ -19,7 +19,7 @@
 - [x] Propagate app version to url
 - [ ] Overall error handling
 - [ ] Start unlinked
-- [ ] Publish to hex.pm
+- [x] Publish to hex.pm
 - [ ] Fallback to REST when triggering on a public channel
 
 ## Usage
