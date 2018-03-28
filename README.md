@@ -1,6 +1,6 @@
 # Pushex
 
-[![Ebert](https://ebertapp.io/github/stepnivlk/pushex.svg)](https://ebertapp.io/github/stepnivlk/pushex)
+[![Build Status](https://travis-ci.org/stepnivlk/pushex.svg?branch=master)](https://travis-ci.org/stepnivlk/pushex) [![Ebert](https://ebertapp.io/github/stepnivlk/pushex.svg)](https://ebertapp.io/github/stepnivlk/pushex)
 
 **WIP**
 
