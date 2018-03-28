@@ -1,6 +1,6 @@
-defmodule PushexTest do
+defmodule PushestTest do
   use ExUnit.Case
-  doctest Pushex
+  doctest Pushest
 
   test "greets the world" do
   end

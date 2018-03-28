@@ -1,6 +1,6 @@
-# Pushex
+# Pushest
 
-[![Build Status](https://travis-ci.org/stepnivlk/pushex.svg?branch=master)](https://travis-ci.org/stepnivlk/pushex) [![Ebert](https://ebertapp.io/github/stepnivlk/pushex.svg)](https://ebertapp.io/github/stepnivlk/pushex)
+[![Build Status](https://travis-ci.org/stepnivlk/pushest.svg?branch=master)](https://travis-ci.org/stepnivlk/pushest) [![Ebert](https://ebertapp.io/github/stepnivlk/pushest.svg)](https://ebertapp.io/github/stepnivlk/pushest)
 
 **WIP**
 
@@ -14,7 +14,7 @@
 - [x] Handle `pusher:error`
 - [ ] Documentation
 - [ ] :gun.conn supervision
-- [x] start_link/3 - opts to Pushex
+- [x] start_link/3 - opts to Pushest
 - [x] Named process option
 - [x] Propagate app version to url
 - [ ] Overall error handling
@@ -25,10 +25,10 @@
 ## Usage
 ```elixir
 defmodule SimpleClient do
-  use Pushex
+  use Pushest
 
   def start_link(app_key, app_options, options \\ []) do
-    Pushex.start_link(app_key, app_options, __MODULE__, options)
+    Pushest.start_link(app_key, app_options, __MODULE__, options)
   end
   
   # User-defined event handling callbacks.
@@ -70,7 +70,7 @@ SimpleClient.subscribe(pid, "presence-channel", %{user_id: "1", user_info: %{nam
 
 # Get list of users subscribed to a presence-channel:
 SimpleClient.presence(pid)
-# => %Pushex.Data.Presence{
+# => %Pushest.Data.Presence{
 #      count: 1,
 #      hash: %{"1" => %{"name" => "Tomas Koutsky"}},
 #      ids: ["1"],
@@ -91,10 +91,10 @@ SimpleClient.unsubscribe(pid, "public-channel")
 ## Usage with registered name
 ```elixir
 defmodule NamedClient do
-  use Pushex
+  use Pushest
 
   def start_link(app_key, app_options) do
-    Pushex.start_link(app_key, app_options, __MODULE__, name: __MODULE__)
+    Pushest.start_link(app_key, app_options, __MODULE__, name: __MODULE__)
   end
   
   def handle_event({:ok, "public-channel", "first-event"}, frame) do
@@ -125,7 +125,7 @@ NamedClient.subscribe("private-channel")
 
 NamedClient.subscribe(pid, "presence-channel", %{user_id: "2", user_info: %{name: "Jose Valim"}})
 NamedClient.presence()
-# => %Pushex.Data.Presence{
+# => %Pushest.Data.Presence{
 #      count: 2,
 #      hash: %{"1" => %{"name" => "Tomas Koutsky"}, "2" => %{"name" => "Jose Valim"}},
 #      ids: ["1", "2"],
@@ -141,9 +141,9 @@ NamedClient.unsubscribe("public-channel")
 ```
 
 #### `frame` example
-`frame` is a `Pushex.Data.Frame` struct with data payload as a map. 
+`frame` is a `Pushest.Data.Frame` struct with data payload as a map. 
 ```elixir
-%Pushex.Data.Frame{
+%Pushest.Data.Frame{
   channel: "private-channel",
   data: %{"name" => "John", "message" => "Hello"},
   event: "second-event"
@@ -153,16 +153,16 @@ NamedClient.unsubscribe("public-channel")
 ## Installation
 
 If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `pushex` to your list of dependencies in `mix.exs`:
+by adding `pushest` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
   [
-    {:pushex, "~> 0.1.0"}
+    {:pushest, "~> 0.1.0"}
   ]
 end
 ```
 
 Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
 and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/pushex](https://hexdocs.pm/pushex).
+be found at [https://hexdocs.pm/pushest](https://hexdocs.pm/pushest).

@@ -1,9 +1,9 @@
-defmodule Pushex.UtilsTest do
+defmodule Pushest.UtilsTest do
   use ExUnit.Case, async: true
-  doctest Pushex.Utils
+  doctest Pushest.Utils
 
-  alias Pushex.Utils
-  alias Pushex.Data.{Url, Options, State, SocketInfo}
+  alias Pushest.Utils
+  alias Pushest.Data.{Url, Options, State, SocketInfo}
 
   @app_key "APP_KEY"
 
@@ -65,7 +65,7 @@ defmodule Pushex.UtilsTest do
 
       assert path ==
                to_charlist(
-                 "/app/APP_KEY?protocol=7&client=pushex&version=#{@version}&flash=false"
+                 "/app/APP_KEY?protocol=7&client=pushest&version=#{@version}&flash=false"
                )
 
       assert port == 443
@@ -79,7 +79,7 @@ defmodule Pushex.UtilsTest do
 
       assert path ==
                to_charlist(
-                 "/app/APP_KEY?protocol=7&client=pushex&version=#{@version}&flash=false"
+                 "/app/APP_KEY?protocol=7&client=pushest&version=#{@version}&flash=false"
                )
 
       assert port == 80

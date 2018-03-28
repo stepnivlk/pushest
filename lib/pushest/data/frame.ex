@@ -1,11 +1,11 @@
-defmodule Pushex.Data.Frame do
+defmodule Pushest.Data.Frame do
   @moduledoc ~S"""
-  Structure representing a Frame being passed between Pushex and Pusher server.
+  Structure representing a Frame being passed between Pushest and Pusher server.
   Includes methods constructing Frame structure for various pusher events.
   This module handles encode/decode actions for a Frame.
   """
 
-  alias Pushex.Data.SubscriptionData
+  alias Pushest.Data.SubscriptionData
 
   defstruct [:channel, :event, :data]
 
@@ -14,10 +14,10 @@ defmodule Pushex.Data.Frame do
 
   ## Examples
 
-      iex> Pushex.Data.Frame.subscribe("private-chnl", "auth")
-      %Pushex.Data.Frame{
+      iex> Pushest.Data.Frame.subscribe("private-chnl", "auth")
+      %Pushest.Data.Frame{
         event: "pusher:subscribe",
-        data: %Pushex.Data.SubscriptionData{
+        data: %Pushest.Data.SubscriptionData{
           auth: "auth",
           channel: "private-chnl",
           channel_data: %{}
@@ -25,10 +25,10 @@ defmodule Pushex.Data.Frame do
         channel: nil
       }
 
-      iex> Pushex.Data.Frame.subscribe("private-chnl", "auth", %{user_id: 1})
-      %Pushex.Data.Frame{
+      iex> Pushest.Data.Frame.subscribe("private-chnl", "auth", %{user_id: 1})
+      %Pushest.Data.Frame{
         event: "pusher:subscribe",
-        data: %Pushex.Data.SubscriptionData{
+        data: %Pushest.Data.SubscriptionData{
           auth: "auth",
           channel: "private-chnl",
           channel_data: %{user_id: 1}
@@ -53,10 +53,10 @@ defmodule Pushex.Data.Frame do
 
   ## Examples
 
-      iex> Pushex.Data.Frame.unsubscribe("private-chnl")
-      %Pushex.Data.Frame{
+      iex> Pushest.Data.Frame.unsubscribe("private-chnl")
+      %Pushest.Data.Frame{
         event: "pusher:unsubscribe",
-        data: %Pushex.Data.SubscriptionData{channel: "private-chnl"}
+        data: %Pushest.Data.SubscriptionData{channel: "private-chnl"}
       }
   """
   @spec unsubscribe(String.t()) :: %__MODULE__{}
@@ -74,8 +74,8 @@ defmodule Pushex.Data.Frame do
 
   ## Examples
 
-      iex> Pushex.Data.Frame.event("private-chnl", "evnt", %{name: "stepnivlk"})
-      %Pushex.Data.Frame{
+      iex> Pushest.Data.Frame.event("private-chnl", "evnt", %{name: "stepnivlk"})
+      %Pushest.Data.Frame{
         channel: "private-chnl",
         data: %{name: "stepnivlk"},
         event: "client-evnt"
@@ -95,12 +95,12 @@ defmodule Pushex.Data.Frame do
 
   ## Examples
 
-      iex> Pushex.Data.Frame.encode!(%Pushex.Data.Frame{
+      iex> Pushest.Data.Frame.encode!(%Pushest.Data.Frame{
       ...> channel: "public-channel", event: "first-event"
       ...> })
       "{\"event\":\"first-event\",\"data\":null,\"channel\":\"public-channel\"}"
 
-      iex> Pushex.Data.Frame.encode!(%Pushex.Data.Frame{
+      iex> Pushest.Data.Frame.encode!(%Pushest.Data.Frame{
       ...> channel: "public-channel",
       ...> event: "first-event",
       ...> data: %{name: "stepnivlk"}
@@ -122,11 +122,11 @@ defmodule Pushex.Data.Frame do
 
   ## Examples
 
-      iex> Pushex.Data.Frame.decode!("{\"event\":\"first-event\",\"data\":null,\"channel\":\"public-channel\"}")
-      %Pushex.Data.Frame{channel: "public-channel", event: "first-event"}
+      iex> Pushest.Data.Frame.decode!("{\"event\":\"first-event\",\"data\":null,\"channel\":\"public-channel\"}")
+      %Pushest.Data.Frame{channel: "public-channel", event: "first-event"}
 
-      iex> Pushex.Data.Frame.decode!("{\"event\":\"first-event\",\"data\":{\"test\":1},\"channel\":\"public-channel\"}")
-      %Pushex.Data.Frame{channel: "public-channel", event: "first-event", data: %{"test" => 1}}
+      iex> Pushest.Data.Frame.decode!("{\"event\":\"first-event\",\"data\":{\"test\":1},\"channel\":\"public-channel\"}")
+      %Pushest.Data.Frame{channel: "public-channel", event: "first-event", data: %{"test" => 1}}
   """
   @spec decode!(String.t()) :: %__MODULE__{}
   def decode!(raw_frame) do

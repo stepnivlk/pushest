@@ -1,14 +1,14 @@
-defmodule Pushex.Data.FrameTest do
+defmodule Pushest.Data.FrameTest do
   use ExUnit.Case, async: true
-  doctest Pushex.Data.Frame
+  doctest Pushest.Data.Frame
 
-  alias Pushex.Data.Frame
+  alias Pushest.Data.Frame
 
   describe "encode!/1" do
     test "When `channel_data` is provided it should encode it as a string" do
       frame = %Frame{
         event: "pusher:subscribe",
-        data: %Pushex.Data.SubscriptionData{
+        data: %Pushest.Data.SubscriptionData{
           auth: "auth",
           channel: "private-chnl",
           channel_data: %{
