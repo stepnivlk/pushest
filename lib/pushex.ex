@@ -221,7 +221,7 @@ defmodule Pushex do
 
       "pusher:error" ->
         message = Map.get(frame.data, "message")
-        Logger.debug("pusher:error #{inspect(message)}")
+        Logger.debug(fn -> "pusher:error #{inspect(message)}" end)
         try_callback(module, :handle_event, [{:error, message}, frame])
         {:noreply, state}
 
