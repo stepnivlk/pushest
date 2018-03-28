@@ -82,7 +82,7 @@ SimpleClient.trigger(pid, "private-channel", "first-event", %{name: "Tomas Kouts
 
 # List of subscribed channels:
 SimpleClient.channels(pid)
-# => ["private-channel", "public-channel"]
+# => ["presence-channel", "private-channel", "public-channel"]
 
 # Unsubscribe from a channel:
 SimpleClient.unsubscribe(pid, "public-channel")
@@ -135,7 +135,7 @@ NamedClient.presence()
 NamedClient.trigger("private-channel", "first-event", %{name: "Tomas Koutsky"})
 
 NamedClient.channels()
-# => ["private-channel", "public-channel"]
+# => ["presence-channel", "private-channel", "public-channel"]
 
 NamedClient.unsubscribe("public-channel")
 ```
