@@ -1,14 +1,15 @@
-defmodule Pushex do
+defmodule Pushest do
   @moduledoc ~S"""
-  Pushex handles communication with Pusher server via wesockets. Abstracts
+  Pushest handles communication with Pusher server via wesockets. Abstracts
   un/subscription, client-side triggers, private/presence channel authorizations.
   Keeps track of subscribed channels and users presence when subscribed to presence channel.
-  Pushex is meant to be used in your module where you can define callbacks for
+  Pushest is meant to be used in your module where you can define callbacks for
   events you're interested in.
 
   A simple implementation would be:
+  ```
   defmodule SimpleClient do
-    use Pushex
+    use Pushest
 
     def start_link() do
       options = %{
@@ -16,7 +17,7 @@ defmodule Pushex do
         encrypted: true,
         secret: "SECRET"
       }
-      Pushex.start_link("APP_KEY", options, __MODULE__, name: __MODULE__)
+      Pushest.start_link("APP_KEY", options, __MODULE__, name: __MODULE__)
     end
 
     def handle_event({:ok, "public-channel", "some-event"}, frame) do
@@ -27,10 +28,11 @@ defmodule Pushex do
       # do something with private frame
     end
   end
+  ```
   """
 
   @typedoc ~S"""
-  Options for Pushex to properly communicate with Pusher server.
+  Options for Pushest to properly communicate with Pusher server.
 
   - `:cluster` - Cluster where your Pusher app is configured.
   - `:encrypted` - When set to true communication with Pusher is fully encrypted.
@@ -42,8 +44,10 @@ defmodule Pushex do
 
   require Logger
 
-  alias Pushex.Data.{State, Frame, SocketInfo, Options, Url, Presence}
-  alias Pushex.Utils
+  alias Pushest.Data.{State, Frame, SocketInfo, Options, Url, Presence}
+  alias Pushest.Utils
+
+  @client Application.get_env(:pushest, :conn_client)
 
   @doc ~S"""
   Invoked when the Pusher event occurs (e.g. other client sends a message).
@@ -52,7 +56,7 @@ defmodule Pushex do
 
   defmacro __using__(_opts) do
     quote do
-      @behaviour Pushex
+      @behaviour Pushest
 
       def subscribe(pid, channel, user_data) do
         GenServer.cast(pid, {:subscribe, channel, user_data})
@@ -117,8 +121,8 @@ defmodule Pushex do
   end
 
   @doc ~S"""
-  Starts a Pushex process linked to current process.
-  Please note, you need to provide a module as a third element, Pushex will try
+  Starts a Pushest process linked to current process.
+  Please note, you need to provide a module as a third element, Pushest will try
   to invoke `handle_event` callbacks in that module when Pusher event occurs.
 
   For available pusher_opts values see `t:pusher_opts/0`.
@@ -130,18 +134,27 @@ defmodule Pushex do
     GenServer.start_link(__MODULE__, state, opts)
   end
 
+  @doc ~S"""
+  Starts the @client connection to the Pusher URL and upgrades it to WS/S communication.
+  Stores @client.conn PID in the state.
+  """
   @spec init(%State{}) :: {:ok, %State{}}
   def init(state = %State{url: %Url{domain: domain, path: path, port: port}}) do
-    {:ok, conn_pid} = :gun.open(domain, port)
+    {:ok, conn_pid} = @client.open(domain, port)
 
-    case :gun.await_up(conn_pid) do
-      {:ok, :http} -> :gun.ws_upgrade(conn_pid, path)
-      {:error, msg} -> raise "Connection init error #{inspect(msg)}"
+    case @client.await_up(conn_pid) do
+      {:ok, :http} ->
+        @client.ws_upgrade(conn_pid, path)
+        {:ok, %{state | conn_pid: conn_pid}}
+      {:error, msg} ->
+        {:stop, "Connection init error #{inspect(msg)}"}
     end
-
-    {:ok, %{state | conn_pid: conn_pid}}
   end
 
+  @doc ~S"""
+  Async server-side callback handling subscription to a Pusher channel.
+  Sends WS frame as a sideeffect.
+  """
   @spec handle_cast({atom, String.t(), map}, %State{}) :: {:noreply, %State{}}
   def handle_cast({:subscribe, channel = "presence-" <> _rest, user_data}, state) do
     case Utils.validate_user_data(user_data) do
@@ -162,39 +175,58 @@ defmodule Pushex do
     {:noreply, state}
   end
 
+  @doc ~S"""
+  Async server-side callback handling unsubscription from a Pusher channel.
+  Sends WS frame as a sideeffect.
+  """
   def handle_cast({:unsubscribe, channel}, state = %State{conn_pid: conn_pid, channels: channels}) do
     frame = channel |> Frame.unsubscribe() |> Frame.encode!()
 
-    :gun.ws_send(conn_pid, {:text, frame})
+    @client.ws_send(conn_pid, {:text, frame})
 
     {:noreply, %{state | channels: List.delete(channels, channel)}}
   end
 
+  @doc ~S"""
+  Async server-side callback handling event triggers with a data payload.
+  Sends WS frame as a sideeffect.
+  """
   def handle_cast({:trigger, channel, event, data}, state = %State{conn_pid: conn_pid}) do
     frame =
       channel
       |> Frame.event(event, data)
       |> Frame.encode!()
 
-    :gun.ws_send(conn_pid, {:text, frame})
+    @client.ws_send(conn_pid, {:text, frame})
 
     {:noreply, state}
   end
 
+  @doc ~S"""
+  Sync server-side callback returning list of subscribed channels.
+  """
   @spec handle_call(:channels | :presence, {pid, term}, %State{}) ::
           {:reply, list | %Presence{}, %State{}}
   def handle_call(:channels, _from, state = %State{channels: channels}) do
     {:reply, channels, state}
   end
 
+  @doc ~S"""
+  Sync server-side callback returning current presence information.
+  Contains IDs of all the subscribed users and optional informations about them.
+  """
   def handle_call(:presence, _from, state = %State{presence: presence}) do
     {:reply, presence, state}
   end
 
+  @spec handle_info(term, %State{}) :: {:noreply, %State{}}
   def handle_info({:gun_ws_upgrade, _conn_pid, :ok, _headers}, state) do
     {:noreply, state}
   end
 
+  @doc ~S"""
+  Handles varios Pusher events, updates state and tries to call user-defined callbacks.
+  """
   def handle_info(
         {:gun_ws, _conn_pid, {:text, raw_frame}},
         state = %State{module: module, channels: channels, presence: presence}
@@ -236,6 +268,7 @@ defmodule Pushex do
     {:noreply, state}
   end
 
+  @spec init_state(String.t, map, module) :: %State{}
   defp init_state(app_key, options, module) do
     %State{
       app_key: app_key,
@@ -245,13 +278,15 @@ defmodule Pushex do
     }
   end
 
+  @spec do_subscribe(String.t, map, %State{}) :: term
   defp do_subscribe(channel, user_data, state = %State{conn_pid: conn_pid}) do
     auth = Utils.auth(state, channel, user_data)
     frame = Frame.subscribe(channel, auth, user_data)
 
-    :gun.ws_send(conn_pid, {:text, Frame.encode!(frame)})
+    @client.ws_send(conn_pid, {:text, Frame.encode!(frame)})
   end
 
+  @spec try_callback(module, atom, list) :: term
   defp try_callback(module, function, args) do
     apply(module, function, args)
   catch

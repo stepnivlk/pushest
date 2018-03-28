@@ -1,4 +1,4 @@
-defmodule Pushex.Data.Url do
+defmodule Pushest.Data.Url do
   @moduledoc ~S"""
   Structure used to construct URL for Pusher server.
   """

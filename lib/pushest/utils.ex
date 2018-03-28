@@ -1,9 +1,9 @@
-defmodule Pushex.Utils do
+defmodule Pushest.Utils do
   @moduledoc ~S"""
   Contains helper, data validation andd authorization methods.
   """
 
-  alias Pushex.Data.{State, Options, SocketInfo, Url}
+  alias Pushest.Data.{State, Options, SocketInfo, Url}
 
   @version Mix.Project.config()[:version]
   @protocol 7
@@ -37,7 +37,7 @@ defmodule Pushex.Utils do
       domain: to_charlist("ws-#{cluster}.pusher.com"),
       path:
         to_charlist(
-          "/app/#{app_key}?protocol=#{@protocol}&client=pushex&version=#{@version}&flash=false"
+          "/app/#{app_key}?protocol=#{@protocol}&client=pushest&version=#{@version}&flash=false"
         ),
       port: if(encrypted, do: 443, else: 80)
     }
@@ -50,19 +50,19 @@ defmodule Pushex.Utils do
 
   ## Examples
 
-      iex> Pushex.Utils.validate_user_data(%{user_id: 1})
+      iex> Pushest.Utils.validate_user_data(%{user_id: 1})
       {:ok, %{user_id: 1}}
 
-      iex> Pushex.Utils.validate_user_data(%{user_id: "1"})
+      iex> Pushest.Utils.validate_user_data(%{user_id: "1"})
       {:ok, %{user_id: "1"}}
 
-      iex> Pushex.Utils.validate_user_data(%{user_id: ""})
+      iex> Pushest.Utils.validate_user_data(%{user_id: ""})
       {:error, %{user_id: ""}}
 
-      iex> Pushex.Utils.validate_user_data(%{user_id: nil})
+      iex> Pushest.Utils.validate_user_data(%{user_id: nil})
       {:error, %{user_id: nil}}
 
-      iex> Pushex.Utils.validate_user_data(%{})
+      iex> Pushest.Utils.validate_user_data(%{})
       {:error, %{}}
   """
   @spec validate_user_data(map) :: {:ok, map} | {:error, map}

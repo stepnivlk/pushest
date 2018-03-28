@@ -1,4 +1,4 @@
-defmodule Pushex.Data.SocketInfo do
+defmodule Pushest.Data.SocketInfo do
   @moduledoc ~S"""
   Structure representing a basic socket informations which are being sent when
   connection with Pusher server is estabilished.
@@ -12,8 +12,8 @@ defmodule Pushex.Data.SocketInfo do
 
   ## Examples
 
-      iex> Pushex.Data.SocketInfo.decode(%{"socket_id" => "123.456", "activity_timeout" => 120})
-      %Pushex.Data.SocketInfo{socket_id: "123.456", activity_timeout: 120}
+      iex> Pushest.Data.SocketInfo.decode(%{"socket_id" => "123.456", "activity_timeout" => 120})
+      %Pushest.Data.SocketInfo{socket_id: "123.456", activity_timeout: 120}
   """
   @spec decode(map) :: %__MODULE__{}
   def decode(socket_info) do
