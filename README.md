@@ -64,6 +64,19 @@ SimpleClient.subscribe(pid, "public-channel")
 # in Pusher app settings.
 SimpleClient.subscribe(pid, "private-channel")
 
+# Subscription to presence channel:
+# `:user_id` is mandatory and has to be unique over the userset in given channel.
+SimpleClient.subscribe(pid, "presence-channel", %{user_id: "1", user_info: %{name: "Tomas Koutsky"}})
+
+# Get list of users subscribed to a presence-channel:
+SimpleClient.presence(pid)
+# => %Pushex.Data.Presence{
+#      count: 1,
+#      hash: %{"1" => %{"name" => "Tomas Koutsky"}},
+#      ids: ["1"],
+#      me: %{user_id: "1", user_info: %{name: "Tomas Koutsky"}}
+#    }
+
 # Triggers can be performed only on private channels:
 SimpleClient.trigger(pid, "private-channel", "first-event", %{name: "Tomas Koutsky"})
 
@@ -110,6 +123,15 @@ NamedClient.start_link(app_key, options)
 NamedClient.subscribe("public-channel")
 NamedClient.subscribe("private-channel")
 
+NamedClient.subscribe(pid, "presence-channel", %{user_id: "2", user_info: %{name: "Jose Valim"}})
+NamedClient.presence()
+# => %Pushex.Data.Presence{
+#      count: 2,
+#      hash: %{"1" => %{"name" => "Tomas Koutsky"}, "2" => %{"name" => "Jose Valim"}},
+#      ids: ["1", "2"],
+#      me: %{user_id: "2", user_info: %{name: "Jose Valim"}}
+#    }
+
 NamedClient.trigger("private-channel", "first-event", %{name: "Tomas Koutsky"})
 
 NamedClient.channels()
@@ -119,12 +141,11 @@ NamedClient.unsubscribe("public-channel")
 ```
 
 #### `frame` example
-`frame` is a `Pushex.Data.Frame` struct with data payload as stringified JSON. 
-It's up to a developer implementing given callback to decode data payload.
+`frame` is a `Pushex.Data.Frame` struct with data payload as a map. 
 ```elixir
 %Pushex.Data.Frame{
   channel: "private-channel",
-  data: "{\r\n  \"name\": \"John\",\r\n  \"message\": \"Hello\"\r\n}",
+  data: %{"name" => "John", "message" => "Hello"},
   event: "second-event"
 }
 ```
