@@ -6,7 +6,7 @@
 
 ## TODO
 - [x] Event scoping
-- [ ] Presence
+- [x] Presence
 - [x] Unsubscribe method
 - [x] Channels list method
 - [x] Auth token generated only for private/presence channels
@@ -18,6 +18,7 @@
 - [x] Named process option
 - [x] Propagate app version to url
 - [ ] Overall error handling
+- [ ] Start unlinked
 - [ ] Publish to hex.pm
 - [ ] Fallback to REST when triggering on a public channel
 

@@ -3,6 +3,5 @@ defmodule PushexTest do
   doctest Pushex
 
   test "greets the world" do
-    assert Pushex.hello() == :world
   end
 end
