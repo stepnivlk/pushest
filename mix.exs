@@ -4,7 +4,7 @@ defmodule Pushex.MixProject do
   def project do
     [
       app: :pushex,
-      version: "0.1.3",
+      version: "0.1.4",
       elixir: "~> 1.6",
       start_permanent: Mix.env() == :prod,
       deps: deps()
@@ -23,7 +23,8 @@ defmodule Pushex.MixProject do
     [
       {:poison, "~> 3.1"},
       {:gun, "~> 1.0.0-pre.4b"},
-      {:credo, "~> 0.9.0-rc1", only: [:dev, :test], runtime: false}
+      {:credo, "~> 0.9.0-rc1", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 0.5", only: [:dev], runtime: false}
     ]
   end
 end
