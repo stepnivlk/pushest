@@ -34,10 +34,11 @@ defmodule Pushex.Utils do
   @spec url(String.t(), map) :: %Url{}
   def url(app_key, %{cluster: cluster, encrypted: encrypted}) do
     %Url{
-      domain: "ws-#{cluster}.pusher.com" |> to_charlist,
+      domain: to_charlist("ws-#{cluster}.pusher.com"),
       path:
-        "/app/#{app_key}?protocol=#{@protocol}&client=pushex&version=#{@version}&flash=false"
-        |> to_charlist,
+        to_charlist(
+          "/app/#{app_key}?protocol=#{@protocol}&client=pushex&version=#{@version}&flash=false"
+        ),
       port: if(encrypted, do: 443, else: 80)
     }
   end

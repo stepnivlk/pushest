@@ -64,8 +64,9 @@ defmodule Pushex.UtilsTest do
       assert domain == 'ws-eu.pusher.com'
 
       assert path ==
-               "/app/APP_KEY?protocol=7&client=pushex&version=#{@version}&flash=false"
-               |> to_charlist
+               to_charlist(
+                 "/app/APP_KEY?protocol=7&client=pushex&version=#{@version}&flash=false"
+               )
 
       assert port == 443
     end
@@ -77,8 +78,9 @@ defmodule Pushex.UtilsTest do
       assert domain == 'ws-us.pusher.com'
 
       assert path ==
-               "/app/APP_KEY?protocol=7&client=pushex&version=#{@version}&flash=false"
-               |> to_charlist
+               to_charlist(
+                 "/app/APP_KEY?protocol=7&client=pushex&version=#{@version}&flash=false"
+               )
 
       assert port == 80
     end

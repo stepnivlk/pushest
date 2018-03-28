@@ -23,11 +23,9 @@ defmodule Pushex.Data.FrameTest do
       }
 
       expected_frame =
-        "{\"event\":\"pusher:subscribe\",\"data\":{" <>
-          "\"channel_data\":\"{\\\"user_info\\\":{" <>
+        "{\"event\":\"pusher:subscribe\",\"data\":{\"channel_data\":\"{\\\"user_info\\\":{" <>
           "\\\"name\\\":\\\"Tomas Koutsky\\\",\\\"email\\\":\\\"secret@secret.com\\\"}," <>
-          "\\\"user_id\\\":1}\",\"channel\":\"private-chnl\",\"auth\":\"auth\"}," <>
-          "\"channel\":null}"
+          "\\\"user_id\\\":1}\",\"channel\":\"private-chnl\",\"auth\":\"auth\"},\"channel\":null}"
 
       assert Frame.encode!(frame) == expected_frame
     end

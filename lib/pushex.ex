@@ -2,8 +2,8 @@ defmodule Pushex do
   @moduledoc ~S"""
   Pushex handles communication with Pusher server via wesockets. Abstracts
   un/subscription, client-side triggers, private/presence channel authorizations.
-  Keeps track of subscribed channels andusers presence when subscribed to presence channel.
-  Pushex is meant to be used in your module where you can define calbacks for
+  Keeps track of subscribed channels and users presence when subscribed to presence channel.
+  Pushex is meant to be used in your module where you can define callbacks for
   events you're interested in.
 
   A simple implementation would be:
