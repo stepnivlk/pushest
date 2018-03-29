@@ -152,8 +152,7 @@ defmodule Pushest do
   end
 
   @doc ~S"""
-  Async server-side callback handling subscription to a Pusher channel.
-  Sends WS frame as a sideeffect.
+  Async server-side callback handling un/subscriptions and triggers to a Pusher channel.
   """
   @spec handle_cast({atom, String.t(), map}, %State{}) :: {:noreply, %State{}}
   def handle_cast({:subscribe, channel = "presence-" <> _rest, user_data}, state) do
@@ -175,10 +174,6 @@ defmodule Pushest do
     {:noreply, state}
   end
 
-  @doc ~S"""
-  Async server-side callback handling unsubscription from a Pusher channel.
-  Sends WS frame as a sideeffect.
-  """
   def handle_cast({:unsubscribe, channel}, state = %State{conn_pid: conn_pid, channels: channels}) do
     frame = channel |> Frame.unsubscribe() |> Frame.encode!()
 
@@ -187,10 +182,6 @@ defmodule Pushest do
     {:noreply, %{state | channels: List.delete(channels, channel)}}
   end
 
-  @doc ~S"""
-  Async server-side callback handling event triggers with a data payload.
-  Sends WS frame as a sideeffect.
-  """
   def handle_cast({:trigger, channel, event, data}, state = %State{conn_pid: conn_pid}) do
     frame =
       channel
