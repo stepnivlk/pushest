@@ -146,6 +146,7 @@ defmodule Pushest do
       {:ok, :http} ->
         @client.ws_upgrade(conn_pid, path)
         {:ok, %{state | conn_pid: conn_pid}}
+
       {:error, msg} ->
         {:stop, "Connection init error #{inspect(msg)}"}
     end
@@ -230,7 +231,6 @@ defmodule Pushest do
         {:noreply, %{state | socket_info: SocketInfo.decode(frame.data)}}
 
       "pusher_internal:subscription_succeeded" ->
-        Logger.debug("pusher_internal:subscription_succeeded")
         presence = Presence.merge(presence, frame.data["presence"])
         {:noreply, %{state | channels: [frame.channel | channels], presence: presence}}
 
@@ -259,7 +259,7 @@ defmodule Pushest do
     {:noreply, state}
   end
 
-  @spec init_state(String.t, map, module) :: %State{}
+  @spec init_state(String.t(), map, module) :: %State{}
   defp init_state(app_key, options, module) do
     %State{
       app_key: app_key,
@@ -269,7 +269,7 @@ defmodule Pushest do
     }
   end
 
-  @spec do_subscribe(String.t, map, %State{}) :: term
+  @spec do_subscribe(String.t(), map, %State{}) :: term
   defp do_subscribe(channel, user_data, state = %State{conn_pid: conn_pid}) do
     auth = Utils.auth(state, channel, user_data)
     frame = Frame.subscribe(channel, auth, user_data)

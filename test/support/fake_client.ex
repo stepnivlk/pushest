@@ -3,8 +3,12 @@ defmodule Pushest.FakeClient do
 
   use GenServer
 
-  def start_link do
-    GenServer.start_link(__MODULE__, %{await_up: :ok, last_frame: nil}, name: __MODULE__)
+  def start_link() do
+    GenServer.start_link(
+      __MODULE__,
+      %{await_up: :ok, last_frame: nil},
+      name: __MODULE__
+    )
   end
 
   def setup(payload) do
@@ -54,7 +58,20 @@ defmodule Pushest.FakeClient do
     {:reply, {:ok, last_frame}, state}
   end
 
-  def handle_cast({:frame, frame}, state) do
+  def handle_cast({:frame, frame}, state = %{parent_pid: parent_pid}) do
+    decoded = Poison.decode!(frame)
+
+    case decoded["event"] do
+      "pusher:subscribe" ->
+        response =
+          Poison.encode!(%{
+            "event" => "pusher_internal:subscription_succeeded",
+            "channel" => decoded["data"]["channel"]
+          })
+
+        send(parent_pid, {:gun_ws, self(), {:text, response}})
+    end
+
     {:noreply, Map.put(state, :last_frame, frame)}
   end
 end
