@@ -79,4 +79,82 @@ defmodule PushestTest do
       assert TestPushest.channels(context.pid) == [@channel]
     end
   end
+
+  @channel "test-channel"
+  describe "trigger" do
+    setup do
+      FakeClient.start_link()
+
+      {:ok, pid} = TestPushest.start_link()
+
+      FakeClient.setup(%{parent_pid: pid})
+
+      TestPushest.subscribe(pid, @channel)
+
+      [pid: pid]
+    end
+
+    @event "event"
+    test "sends an event to a channel", context do
+      TestPushest.trigger(context.pid, @channel, @event, %{message: "message"})
+
+      :sys.get_state(context.pid)
+
+      {:ok, frame} = FakeClient.last_frame()
+
+      assert frame == ~s({"event":"client-event","data":{"message":"message"},"channel":"test-channel"})
+    end
+  end
+
+  @channel "presence-channel"
+  describe "presence" do
+    setup do
+      FakeClient.start_link()
+
+      {:ok, pid} = TestPushest.start_link()
+
+      FakeClient.setup(%{parent_pid: pid})
+
+      TestPushest.subscribe(pid, @channel, %{user_id: "1", user_info: %{name: "Jose"}})
+
+      :timer.sleep(500)
+
+      [pid: pid]
+    end
+
+    test "Lists all conected users and keeps track of them", context do
+      expected_presence =  %Pushest.Data.Presence{
+        count: 1,
+        hash: %{"1" => %{"name" => "Jose"}},
+        ids: ["1"],
+        me: %{user_id: "1", user_info: %{name: "Jose"}}
+      }
+
+      assert TestPushest.presence(context.pid) == expected_presence
+    end
+  end
+
+  @channel "test-channel"
+  describe "unsubscribe" do
+    setup do
+      FakeClient.start_link()
+
+      {:ok, pid} = TestPushest.start_link()
+
+      FakeClient.setup(%{parent_pid: pid})
+
+      TestPushest.subscribe(pid, @channel)
+      :sys.get_state(pid)
+
+      [pid: pid]
+    end
+
+    test "unsubscribes and removes channel from local list", context do
+      TestPushest.unsubscribe(context.pid, @channel)
+
+      :sys.get_state(context.pid)
+
+      refute TestPushest.channels(context.pid) == [@channel]
+    end
+  end
 end

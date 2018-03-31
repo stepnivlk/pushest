@@ -6,7 +6,7 @@ defmodule Pushest.FakeClient do
   def start_link() do
     GenServer.start_link(
       __MODULE__,
-      %{await_up: :ok, last_frame: nil},
+      %{await_up: :ok, last_frame: nil, presence: %{count: 0, hash: %{}, ids: []}},
       name: __MODULE__
     )
   end
@@ -58,20 +58,46 @@ defmodule Pushest.FakeClient do
     {:reply, {:ok, last_frame}, state}
   end
 
-  def handle_cast({:frame, frame}, state = %{parent_pid: parent_pid}) do
+  def handle_cast({:frame, frame}, state = %{parent_pid: parent_pid, presence: presence}) do
     decoded = Poison.decode!(frame)
+    next_presence = decoded["data"]["channel_data"] |> decode_data() |> data(presence)
 
     case decoded["event"] do
       "pusher:subscribe" ->
         response =
           Poison.encode!(%{
-            "event" => "pusher_internal:subscription_succeeded",
-            "channel" => decoded["data"]["channel"]
+            event: "pusher_internal:subscription_succeeded",
+            channel: decoded["data"]["channel"],
+            data: %{
+              presence: next_presence
+            }
           })
 
         send(parent_pid, {:gun_ws, self(), {:text, response}})
+      _ -> nil
     end
 
-    {:noreply, Map.put(state, :last_frame, frame)}
+    {:noreply, Map.merge(state, %{last_frame: frame, presence: next_presence})}
+  end
+
+  defp decode_data(nil), do: nil
+  defp decode_data(channel_data), do: Poison.decode!(channel_data)
+
+  defp data(channel_data, _presence) when channel_data == nil, do: %{}
+  defp data(channel_data, _presence) when channel_data == %{}, do: %{}
+  defp data(%{"user_id" => nil}, _presence), do: %{}
+  defp data(%{"user_id" => user_id, "user_info" => user_info}, presence) do
+    %{
+      count: presence[:count] + 1,
+      ids: [user_id | presence[:ids]],
+      hash: Map.merge(presence[:hash], %{user_id => user_info})
+    }
+  end
+  defp data(%{"user_id" => user_id}, presence) do
+    %{
+      count: presence[:count] + 1,
+      ids: [user_id | presence[:ids]],
+      hash: presence[:hash]
+    }
   end
 end
