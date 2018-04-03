@@ -1,4 +1,4 @@
-defmodule Pushest.Data.Presence do
+defmodule Pushest.Socket.Data.Presence do
   @moduledoc ~S"""
   Structure representing presence information, connected user IDs and data of them.
   """

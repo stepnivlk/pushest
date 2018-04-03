@@ -1,9 +1,8 @@
-defmodule Pushest.Utils do
-  @moduledoc ~S"""
-  Contains helper, data validation andd authorization methods.
-  """
+defmodule Pushest.Socket.Utils do
+  @moduledoc false
 
-  alias Pushest.Data.{State, Options, SocketInfo, Url}
+  alias Pushest.Socket.Data.{Url, State, SocketInfo}
+  alias Pushest.Data.Options
 
   @version Mix.Project.config()[:version]
   @protocol 7
@@ -31,13 +30,13 @@ defmodule Pushest.Utils do
   Server URL for given Pusher app key and configuration. String values are
   converted to charlist since that is the accepted format for underlying :gun lib.
   """
-  @spec url(String.t(), map) :: %Url{}
-  def url(app_key, %{cluster: cluster, encrypted: encrypted}) do
+  @spec url(map) :: %Url{}
+  def url(%{key: key, cluster: cluster, encrypted: encrypted}) do
     %Url{
       domain: to_charlist("ws-#{cluster}.pusher.com"),
       path:
         to_charlist(
-          "/app/#{app_key}?protocol=#{@protocol}&client=pushest&version=#{@version}&flash=false"
+          "/app/#{key}?protocol=#{@protocol}&client=pushest&version=#{@version}&flash=false"
         ),
       port: if(encrypted, do: 443, else: 80)
     }
@@ -74,8 +73,7 @@ defmodule Pushest.Utils do
   @spec do_auth(%State{}, String.t(), map) :: String.t()
   defp do_auth(
          %State{
-           app_key: app_key,
-           options: %Options{secret: secret},
+           options: %Options{key: key, secret: secret},
            socket_info: %SocketInfo{socket_id: socket_id}
          },
          channel,
@@ -86,7 +84,7 @@ defmodule Pushest.Utils do
       |> Base.encode16()
       |> String.downcase()
 
-    "#{app_key}:#{signature}"
+    "#{key}:#{signature}"
   end
 
   @spec string_to_sign(String.t(), String.t(), map) :: String.t()

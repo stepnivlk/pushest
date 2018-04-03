@@ -4,5 +4,5 @@ defmodule Pushest.Data.Options do
   initializating methods.
   """
 
-  defstruct [:cluster, :encrypted, :secret]
+  defstruct [:app_id, :key, :cluster, :encrypted, :secret]
 end

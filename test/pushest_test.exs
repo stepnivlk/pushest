@@ -102,7 +102,8 @@ defmodule PushestTest do
 
       {:ok, frame} = FakeClient.last_frame()
 
-      assert frame == ~s({"event":"client-event","data":{"message":"message"},"channel":"test-channel"})
+      assert frame ==
+               ~s({"event":"client-event","data":{"message":"message"},"channel":"test-channel"})
     end
   end
 
@@ -123,7 +124,7 @@ defmodule PushestTest do
     end
 
     test "Lists all conected users and keeps track of them", context do
-      expected_presence =  %Pushest.Data.Presence{
+      expected_presence = %Pushest.Data.Presence{
         count: 1,
         hash: %{"1" => %{"name" => "Jose"}},
         ids: ["1"],

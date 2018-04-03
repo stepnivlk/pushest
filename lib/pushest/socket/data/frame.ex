@@ -1,11 +1,11 @@
-defmodule Pushest.Data.Frame do
+defmodule Pushest.Socket.Data.Frame do
   @moduledoc ~S"""
   Structure representing a Frame being passed between Pushest and Pusher server.
   Includes methods constructing Frame structure for various pusher events.
   This module handles encode/decode actions for a Frame.
   """
 
-  alias Pushest.Data.SubscriptionData
+  alias Pushest.Socket.Data.SubscriptionData
 
   defstruct [:channel, :event, :data]
 

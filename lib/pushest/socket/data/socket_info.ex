@@ -1,4 +1,4 @@
-defmodule Pushest.Data.SocketInfo do
+defmodule Pushest.Socket.Data.SocketInfo do
   @moduledoc ~S"""
   Structure representing a basic socket informations which are being sent when
   connection with Pusher server is estabilished.

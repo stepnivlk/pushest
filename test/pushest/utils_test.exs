@@ -56,11 +56,11 @@ defmodule Pushest.UtilsTest do
   end
 
   @version Mix.Project.config()[:version]
-  describe "url/2" do
+  describe "ws_url/2" do
     test "Encrypted connection" do
       options = %{cluster: "eu", encrypted: true}
 
-      assert %Url{domain: domain, path: path, port: port} = Utils.url(@app_key, options)
+      assert %Url{domain: domain, path: path, port: port} = Utils.ws_url(@app_key, options)
       assert domain == 'ws-eu.pusher.com'
 
       assert path ==
@@ -74,7 +74,7 @@ defmodule Pushest.UtilsTest do
     test "Non-encrypted connection" do
       options = %{cluster: "us", encrypted: false}
 
-      assert %Url{domain: domain, path: path, port: port} = Utils.url(@app_key, options)
+      assert %Url{domain: domain, path: path, port: port} = Utils.ws_url(@app_key, options)
       assert domain == 'ws-us.pusher.com'
 
       assert path ==

@@ -74,7 +74,9 @@ defmodule Pushest.FakeClient do
           })
 
         send(parent_pid, {:gun_ws, self(), {:text, response}})
-      _ -> nil
+
+      _ ->
+        nil
     end
 
     {:noreply, Map.merge(state, %{last_frame: frame, presence: next_presence})}
@@ -86,6 +88,7 @@ defmodule Pushest.FakeClient do
   defp data(channel_data, _presence) when channel_data == nil, do: %{}
   defp data(channel_data, _presence) when channel_data == %{}, do: %{}
   defp data(%{"user_id" => nil}, _presence), do: %{}
+
   defp data(%{"user_id" => user_id, "user_info" => user_info}, presence) do
     %{
       count: presence[:count] + 1,
@@ -93,6 +96,7 @@ defmodule Pushest.FakeClient do
       hash: Map.merge(presence[:hash], %{user_id => user_info})
     }
   end
+
   defp data(%{"user_id" => user_id}, presence) do
     %{
       count: presence[:count] + 1,
