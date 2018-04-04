@@ -11,8 +11,12 @@ defmodule Pushest.Socket do
 
   @client Pushest.Client.for_env()
 
-  def start_link(pusher_opts) do
-    GenServer.start_link(__MODULE__, init_state(pusher_opts), [])
+  def start_link(opts) do
+    GenServer.start_link(
+      __MODULE__,
+      init_state(opts),
+      name: __MODULE__
+    )
   end
 
   def init(state = %State{url: %Url{domain: domain, path: path, port: port}}) do
@@ -102,7 +106,7 @@ defmodule Pushest.Socket do
   """
   def handle_info(
         {:gun_ws, _conn_pid, {:text, raw_frame}},
-        state = %State{channels: channels, presence: presence}
+        state = %State{channels: channels, presence: presence, callback_module: callback_module}
       ) do
     frame = Frame.decode!(raw_frame)
 
@@ -126,11 +130,16 @@ defmodule Pushest.Socket do
       "pusher:error" ->
         message = Map.get(frame.data, "message")
         Logger.debug(fn -> "pusher:error #{inspect(message)}" end)
-        # try_callback(module, :handle_event, [{:error, message}, frame])
+
+        Pushest.Utils.try_callback(
+          callback_module, :handle_event, [{:error, message}, frame]
+        )
         {:noreply, state}
 
       _ ->
-        # try_callback(module, :handle_event, [{:ok, frame.channel, frame.event}, frame])
+        Pushest.Utils.try_callback(
+          callback_module, :handle_event, [{:ok, frame.channel, frame.event}, frame]
+        )
         {:noreply, state}
     end
   end
@@ -149,10 +158,11 @@ defmodule Pushest.Socket do
   end
 
   @spec init_state(map) :: %State{}
-  defp init_state(pusher_opts) do
+  defp init_state({pusher_opts, callback_module}) do
     %State{
       options: %Options{} |> Map.merge(pusher_opts),
-      url: Utils.url(pusher_opts)
+      url: Utils.url(pusher_opts),
+      callback_module: callback_module
     }
   end
 end

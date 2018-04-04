@@ -12,13 +12,13 @@ defmodule Pushest.Api.Utils do
     }
   end
 
-  def full_path("POST", path, frame, %{app_id: app_id, key: key, secret: secret}) do
+  def full_path(verb, path, %{app_id: app_id, key: key, secret: secret}, frame \\ "") do
     auth_timestamp = DateTime.to_unix(DateTime.utc_now())
 
     frame_md5 = :crypto.hash(:md5, frame) |> Base.encode16(case: :lower)
 
     string_to_sign =
-      "POST\n/apps/#{app_id}/#{path}\n" <>
+      "#{verb}\n/apps/#{app_id}/#{path}\n" <>
         "auth_key=#{key}&" <>
         "auth_timestamp=#{auth_timestamp}&" <>
         "auth_version=#{@auth_version}&" <> "body_md5=#{frame_md5}"

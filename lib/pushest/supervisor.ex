@@ -4,14 +4,14 @@ defmodule Pushest.Supervisor do
   alias Pushest.{Api, Socket}
   use Supervisor
 
-  def start_link(pusher_opts, opts \\ []) do
-    Supervisor.start_link(__MODULE__, pusher_opts)
+  def start_link(pusher_opts, callback_module) do
+    Supervisor.start_link(__MODULE__, {pusher_opts, callback_module})
   end
 
-  def init(args) do
+  def init(opts) do
     children = [
-      {Api, args},
-      {Socket, args}
+      {Api, opts},
+      {Socket, opts}
     ]
 
     Supervisor.init(children, strategy: :one_for_one)

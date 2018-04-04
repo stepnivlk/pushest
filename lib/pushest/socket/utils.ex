@@ -79,19 +79,13 @@ defmodule Pushest.Socket.Utils do
          channel,
          user_data
        ) do
-    signature =
-      :crypto.hmac(:sha256, secret, string_to_sign(socket_id, channel, user_data))
-      |> Base.encode16()
-      |> String.downcase()
+    signed = string_to_sign(socket_id, channel, user_data)
+    signature = :crypto.hmac(:sha256, secret, signed) |> Base.encode16(case: :lower)
 
     "#{key}:#{signature}"
   end
 
   @spec string_to_sign(String.t(), String.t(), map) :: String.t()
-  defp string_to_sign(socket_id, channel, user_data) when user_data == %{} do
-    "#{socket_id}:#{channel}"
-  end
-
   defp string_to_sign(socket_id, channel, user_data) do
     "#{socket_id}:#{channel}:#{Poison.encode!(user_data)}"
   end

@@ -12,5 +12,6 @@ defmodule Pushest.Socket.Data.State do
             channels: [],
             presence: %Presence{},
             conn_pid: nil,
-            m_ref: nil
+            m_ref: nil,
+            callback_module: nil
 end

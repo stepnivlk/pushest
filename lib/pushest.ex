@@ -53,7 +53,7 @@ defmodule Pushest do
     quote bind_quoted: [opts: opts] do
       @behaviour Pushest
 
-      @config Pushest.Supervisor.compile_config(__MODULE__, opts)
+      @config Pushest.Supervisor.config(__MODULE__, opts)
 
       @doc ~S"""
       Starts a Pushest process linked to current process.
@@ -63,39 +63,43 @@ defmodule Pushest do
       For available pusher_opts values see `t:pusher_opts/0`.
       """
       def start_link(opts \\ []) do
-        Pushest.Supervisor.start_link(@config, opts)
+        Pushest.Supervisor.start_link(@config, __MODULE__)
+      end
+
+      def child_spec(opts) do
+        %{
+          id: __MODULE__,
+          start: {__MODULE__, :start_link, [opts]},
+          type: :supervisor
+        }
       end
 
       def subscribe(channel, user_data) do
-        Router.send({:subscribe, channel, user_data}, __MODULE__)
+        Router.cast({:subscribe, channel, user_data})
       end
 
       def subscribe(channel) do
-        Router.send({:subscribe, channel, %{}}, __MODULE__)
+        Router.cast({:subscribe, channel, %{}})
       end
 
       def trigger(channel, event, data) do
-        Router.send({:trigger, channel, event, data}, __MODULE__)
+        Router.cast({:trigger, channel, event, data})
       end
 
       def channels do
-        Router.send(:channels, __MODULE__)
+        Router.call(:channels)
       end
 
       def subscribed_channels do
-        Router.send(:subscribed_channels, __MODULE__)
+        Router.call(:subscribed_channels)
       end
 
       def presence do
-        Router.send(:presence, __MODULE__)
-      end
-
-      def unsubscribe(pid, channel) do
-        GenServer.cast(pid, {:unsubscribe, channel})
+        Router.call(:presence)
       end
 
       def unsubscribe(channel) do
-        Router.send({:unsubscribe, channel}, __MODULE__)
+        Router.cast({:unsubscribe, channel})
       end
 
       def handle_event({status, channel, event}, frame) do
@@ -110,18 +114,5 @@ defmodule Pushest do
 
       defoverridable handle_event: 2
     end
-  end
-
-  @spec try_callback(module, atom, list) :: term
-  defp try_callback(module, function, args) do
-    apply(module, function, args)
-  catch
-    :error, payload ->
-      stacktrace = System.stacktrace()
-      reason = Exception.normalize(:error, payload, stacktrace)
-      {:"$EXIT", {reason, stacktrace}}
-
-    :exit, payload ->
-      {:"$EXIT", payload}
   end
 end
