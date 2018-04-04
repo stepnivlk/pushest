@@ -42,57 +42,52 @@ defmodule Pushest do
 
   require Logger
 
-  alias Pushest.Client
-
-  @client Application.get_env(:pushest, :conn_client)
+  alias Pushest.Router
 
   @doc ~S"""
   Invoked when the Pusher event occurs (e.g. other client sends a message).
   """
   @callback handle_event({atom, String.t(), String.t()}, term) :: term
 
-  defmacro __using__(_opts) do
-    quote do
+  defmacro __using__(opts) do
+    quote bind_quoted: [opts: opts] do
       @behaviour Pushest
 
-      def subscribe(pid, channel, user_data) do
-        GenServer.cast(pid, {:subscribe, channel, user_data})
-      end
+      @config Pushest.Supervisor.compile_config(__MODULE__, opts)
 
-      def subscribe(pid, channel) when is_pid(pid) do
-        GenServer.cast(pid, {:subscribe, channel, %{}})
+      @doc ~S"""
+      Starts a Pushest process linked to current process.
+      Please note, you need to provide a module as a third element, Pushest will try
+      to invoke `handle_event` callbacks in that module when Pusher event occurs.
+
+      For available pusher_opts values see `t:pusher_opts/0`.
+      """
+      def start_link(opts \\ []) do
+        Pushest.Supervisor.start_link(@config, opts)
       end
 
       def subscribe(channel, user_data) do
-        GenServer.cast(__MODULE__, {:subscribe, channel, user_data})
+        Router.send({:subscribe, channel, user_data}, __MODULE__)
       end
 
       def subscribe(channel) do
-        GenServer.cast(__MODULE__, {:subscribe, channel, %{}})
-      end
-
-      def trigger(pid, channel, event, data) do
-        GenServer.cast(pid, {:trigger, channel, event, data})
+        Router.send({:subscribe, channel, %{}}, __MODULE__)
       end
 
       def trigger(channel, event, data) do
-        Client.send({:trigger, channel, event, data}, __MODULE__)
-      end
-
-      def channels(pid) do
-        GenServer.call(pid, :channels)
+        Router.send({:trigger, channel, event, data}, __MODULE__)
       end
 
       def channels do
-        GenServer.call(__MODULE__, :channels)
+        Router.send(:channels, __MODULE__)
       end
 
-      def presence(pid) do
-        GenServer.call(pid, :presence)
+      def subscribed_channels do
+        Router.send(:subscribed_channels, __MODULE__)
       end
 
       def presence do
-        GenServer.call(__MODULE__, :presence)
+        Router.send(:presence, __MODULE__)
       end
 
       def unsubscribe(pid, channel) do
@@ -100,7 +95,7 @@ defmodule Pushest do
       end
 
       def unsubscribe(channel) do
-        GenServer.cast(__MODULE__, {:unsubscribe, channel})
+        Router.send({:unsubscribe, channel}, __MODULE__)
       end
 
       def handle_event({status, channel, event}, frame) do
@@ -115,18 +110,6 @@ defmodule Pushest do
 
       defoverridable handle_event: 2
     end
-  end
-
-  @doc ~S"""
-  Starts a Pushest process linked to current process.
-  Please note, you need to provide a module as a third element, Pushest will try
-  to invoke `handle_event` callbacks in that module when Pusher event occurs.
-
-  For available pusher_opts values see `t:pusher_opts/0`.
-  """
-  @spec start_link(pusher_opts, module, list) :: {:ok, pid} | {:error, term}
-  def start_link(pusher_opts, module, opts \\ []) do
-    Pushest.Supervisor.start_link(pusher_opts)
   end
 
   @spec try_callback(module, atom, list) :: term

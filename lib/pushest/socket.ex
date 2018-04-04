@@ -9,7 +9,7 @@ defmodule Pushest.Socket do
   alias __MODULE__.Data.{State, Frame, Url, Presence, SocketInfo}
   alias Pushest.Data.Options
 
-  @client Application.get_env(:pushest, :conn_client)
+  @client Pushest.Client.for_env()
 
   def start_link(pusher_opts) do
     GenServer.start_link(__MODULE__, init_state(pusher_opts), [])

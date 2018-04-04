@@ -8,7 +8,7 @@ defmodule Pushest.Api do
   alias __MODULE__.Utils
   alias __MODULE__.Data.{Frame, Url}
 
-  @client Application.get_env(:pushest, :conn_client)
+  @client Pushest.Client.for_env()
   @version Mix.Project.config()[:version]
 
   def start_link(pusher_opts) do
