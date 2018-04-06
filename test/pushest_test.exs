@@ -17,7 +17,7 @@ defmodule PushestTest do
   def child_pid(mod_name) do
     Pushest.Supervisor
     |> Supervisor.which_children()
-    |> Enum.find(fn({name, _, _, _}) -> name == mod_name end)
+    |> Enum.find(fn {name, _, _, _} -> name == mod_name end)
     |> elem(1)
   end
 
@@ -79,7 +79,9 @@ defmodule PushestTest do
       {:ok, frame} = FakeClient.last_frame()
 
       assert frame ==
-               ~s({"event":"pusher:subscribe","data":{"channel_data":"{}","channel":"private-channel","auth":"#{@app_key}:489cbc51261a2aa3baaf69b2df8c521530e2c1d9443d4cc3716328189120b1e8"},"channel":null})
+               ~s({"event":"pusher:subscribe","data":{"channel_data":"{}","channel":"private-channel","auth":"#{
+                 @app_key
+               }:489cbc51261a2aa3baaf69b2df8c521530e2c1d9443d4cc3716328189120b1e8"},"channel":null})
 
       assert TestPushest.subscribed_channels() |> Enum.member?(@channel)
     end
@@ -105,7 +107,9 @@ defmodule PushestTest do
       {:ok, frame} = FakeClient.last_frame()
 
       assert frame ==
-               "{\"event\":\"pusher:subscribe\",\"data\":{\"channel_data\":\"{\\\"user_id\\\":\\\"1\\\"}\",\"channel\":\"#{@channel}\",\"auth\":\"#{@app_key}:f57ab9a6a321361ee0594546da129d240b338c13ebac5444ccee4fbcbe80074f\"},\"channel\":null}"
+               "{\"event\":\"pusher:subscribe\",\"data\":{\"channel_data\":\"{\\\"user_id\\\":\\\"1\\\"}\",\"channel\":\"#{
+                 @channel
+               }\",\"auth\":\"#{@app_key}:f57ab9a6a321361ee0594546da129d240b338c13ebac5444ccee4fbcbe80074f\"},\"channel\":null}"
 
       assert TestPushest.subscribed_channels() |> Enum.member?(@channel)
     end

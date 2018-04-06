@@ -131,15 +131,15 @@ defmodule Pushest.Socket do
         message = Map.get(frame.data, "message")
         Logger.debug(fn -> "pusher:error #{inspect(message)}" end)
 
-        Pushest.Utils.try_callback(
-          callback_module, :handle_event, [{:error, message}, frame]
-        )
+        Pushest.Utils.try_callback(callback_module, :handle_event, [{:error, message}, frame])
         {:noreply, state}
 
       _ ->
-        Pushest.Utils.try_callback(
-          callback_module, :handle_event, [{:ok, frame.channel, frame.event}, frame]
-        )
+        Pushest.Utils.try_callback(callback_module, :handle_event, [
+          {:ok, frame.channel, frame.event},
+          frame
+        ])
+
         {:noreply, state}
     end
   end

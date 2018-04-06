@@ -28,7 +28,7 @@ defmodule Pushest.Supervisor do
       cluster: app_config[:pusher_cluster],
       encrypted: app_config[:pusher_encrypted]
     }
-    
+
     pusher_config
   end
 end

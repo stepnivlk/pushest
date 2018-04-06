@@ -71,13 +71,14 @@ defmodule Pushest.FakeClient do
   end
 
   def handle_call(:establish_connection, _from, state) do
-    response = Poison.encode!(%{
-      event: "pusher:connection_established",
-      data: %{
-        socket_id: "123.456",
-        activity_timeout: 500
-      }
-    })
+    response =
+      Poison.encode!(%{
+        event: "pusher:connection_established",
+        data: %{
+          socket_id: "123.456",
+          activity_timeout: 500
+        }
+      })
 
     send(Pushest.Socket, {:gun_ws, self(), {:text, response}})
 

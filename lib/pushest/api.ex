@@ -73,7 +73,10 @@ defmodule Pushest.Api do
     {:noreply, state}
   end
 
-  def handle_info({:gun_down, _conn_pid, _protocol, reason, _killed_streams, _unprocessed_streams}, state) do
+  def handle_info(
+        {:gun_down, _conn_pid, _protocol, reason, _killed_streams, _unprocessed_streams},
+        state
+      ) do
     Logger.error(":gun_down #{reason}")
     {:noreply, state}
   end
@@ -105,11 +108,13 @@ defmodule Pushest.Api do
     case @client.await(conn_pid, stream_ref) do
       {:response, :fin, _status, _headers} ->
         :no_data
+
       {:response, :nofin, _status, _headers} ->
         {:ok, body} = @client.await_body(conn_pid, stream_ref)
         Poison.decode!(body)
+
       {:error, reason} ->
-        Logger.error(":gun_fail #{inspect reason}")
+        Logger.error(":gun_fail #{inspect(reason)}")
     end
   end
 end
