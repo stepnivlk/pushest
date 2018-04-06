@@ -62,7 +62,11 @@ defmodule Pushest do
 
       For available pusher_opts values see `t:pusher_opts/0`.
       """
-      def start_link(opts \\ []) do
+      def start_link(pusher_config) when is_map(pusher_config) do
+        Pushest.Supervisor.start_link(pusher_config, __MODULE__)
+      end
+
+      def start_link(_) do
         Pushest.Supervisor.start_link(@config, __MODULE__)
       end
 

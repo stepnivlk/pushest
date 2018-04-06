@@ -5,7 +5,7 @@ defmodule Pushest.Supervisor do
   use Supervisor
 
   def start_link(pusher_opts, callback_module) do
-    Supervisor.start_link(__MODULE__, {pusher_opts, callback_module})
+    Supervisor.start_link(__MODULE__, {pusher_opts, callback_module}, name: __MODULE__)
   end
 
   def init(opts) do
@@ -19,7 +19,7 @@ defmodule Pushest.Supervisor do
 
   def config(module, opts) do
     otp_app = Keyword.fetch!(opts, :otp_app)
-    app_config  = Application.get_env(otp_app, module, [])
+    app_config = Application.get_env(otp_app, module, [])
 
     pusher_config = %{
       app_id: app_config[:pusher_app_id],

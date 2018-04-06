@@ -12,8 +12,8 @@ defmodule Pushest.Socket.Data.SocketInfo do
 
   ## Examples
 
-      iex> Pushest.Data.SocketInfo.decode(%{"socket_id" => "123.456", "activity_timeout" => 120})
-      %Pushest.Data.SocketInfo{socket_id: "123.456", activity_timeout: 120}
+      iex> Pushest.Socket.Data.SocketInfo.decode(%{"socket_id" => "123.456", "activity_timeout" => 120})
+      %Pushest.Socket.Data.SocketInfo{socket_id: "123.456", activity_timeout: 120}
   """
   @spec decode(map) :: %__MODULE__{}
   def decode(socket_info) do

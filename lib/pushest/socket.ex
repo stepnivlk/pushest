@@ -21,12 +21,12 @@ defmodule Pushest.Socket do
 
   def init(state = %State{url: %Url{domain: domain, path: path, port: port}}) do
     {:ok, conn_pid} = @client.open(domain, port)
-    m_ref = Process.monitor(conn_pid)
+    Process.monitor(conn_pid)
 
     case @client.await_up(conn_pid) do
       {:ok, :http} ->
         @client.ws_upgrade(conn_pid, path)
-        {:ok, %{state | conn_pid: conn_pid, m_ref: m_ref}}
+        {:ok, %{state | conn_pid: conn_pid}}
 
       {:error, msg} ->
         {:stop, "Connection init error #{inspect(msg)}"}

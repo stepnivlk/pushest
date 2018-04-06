@@ -11,14 +11,14 @@ defmodule Pushest.Socket.Data.Presence do
 
   ## Examples
 
-      iex> Pushest.Data.Presence.merge(%Pushest.Data.Presence{count: 1, ids: [1]}, nil)
-      %Pushest.Data.Presence{count: 1, ids: [1]}
+      iex> Pushest.Socket.Data.Presence.merge(%Pushest.Socket.Data.Presence{count: 1, ids: [1]}, nil)
+      %Pushest.Socket.Data.Presence{count: 1, ids: [1]}
 
-      iex> Pushest.Data.Presence.merge(
-      ...> %Pushest.Data.Presence{me: %{user_id: 1}},
+      iex> Pushest.Socket.Data.Presence.merge(
+      ...> %Pushest.Socket.Data.Presence{me: %{user_id: 1}},
       ...> %{"count" => 1, "ids" => [1]}
       ...> )
-      %Pushest.Data.Presence{count: 1, ids: [1], hash: nil, me: %{user_id: 1}}
+      %Pushest.Socket.Data.Presence{count: 1, ids: [1], hash: nil, me: %{user_id: 1}}
   """
   @spec merge(%__MODULE__{}, %__MODULE__{} | nil) :: %__MODULE__{}
   def merge(current, nil), do: current
@@ -40,11 +40,11 @@ defmodule Pushest.Socket.Data.Presence do
 
   ## Examples
 
-        iex> Pushest.Data.Presence.add_member(
-        ...> %Pushest.Data.Presence{me: %{user_id: "1"}, count: 1, ids: ["1"], hash: %{"1" => nil}},
+        iex> Pushest.Socket.Data.Presence.add_member(
+        ...> %Pushest.Socket.Data.Presence{me: %{user_id: "1"}, count: 1, ids: ["1"], hash: %{"1" => nil}},
         ...> %{"user_id" => "2", "user_info" => %{"name" => "Tomas Koutsky"}}
         ...> )
-        %Pushest.Data.Presence{
+        %Pushest.Socket.Data.Presence{
           me: %{user_id: "1"},
           count: 2, ids: ["2", "1"],
           hash: %{"1" => nil, "2" => %{"name" => "Tomas Koutsky"}}
@@ -69,11 +69,11 @@ defmodule Pushest.Socket.Data.Presence do
 
   ## Examples
 
-        iex> Pushest.Data.Presence.remove_member(
-        ...> %Pushest.Data.Presence{me: %{user_id: "1"}, count: 2, ids: ["1", "2"], hash: %{"1" => nil, "2" => nil}},
+        iex> Pushest.Socket.Data.Presence.remove_member(
+        ...> %Pushest.Socket.Data.Presence{me: %{user_id: "1"}, count: 2, ids: ["1", "2"], hash: %{"1" => nil, "2" => nil}},
         ...> %{"user_id" => "2"}
         ...> )
-        %Pushest.Data.Presence{
+        %Pushest.Socket.Data.Presence{
           me: %{user_id: "1"},
           count: 1, ids: ["1"],
           hash: %{"1" => nil}

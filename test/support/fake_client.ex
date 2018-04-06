@@ -19,8 +19,16 @@ defmodule Pushest.FakeClient do
     GenServer.call(__MODULE__, :last_frame)
   end
 
+  def reset_presence do
+    GenServer.call(__MODULE__, :reset_presence)
+  end
+
   def open(_domain, _port) do
     {:ok, self()}
+  end
+
+  def establish_connection do
+    GenServer.call(__MODULE__, :establish_connection)
   end
 
   ## Fake methods
@@ -47,6 +55,10 @@ defmodule Pushest.FakeClient do
     {:reply, {:ok, :setup}, Map.merge(state, payload)}
   end
 
+  def handle_call(:reset_presence, _from, state) do
+    {:reply, :ok, Map.merge(state, %{presence: %{count: 0, hash: %{}, ids: []}})}
+  end
+
   def handle_call(:await_up, _from, state = %{await_up: status}) do
     case status do
       :ok -> {:reply, {:ok, :http}, state}
@@ -58,7 +70,21 @@ defmodule Pushest.FakeClient do
     {:reply, {:ok, last_frame}, state}
   end
 
-  def handle_cast({:frame, frame}, state = %{parent_pid: parent_pid, presence: presence}) do
+  def handle_call(:establish_connection, _from, state) do
+    response = Poison.encode!(%{
+      event: "pusher:connection_established",
+      data: %{
+        socket_id: "123.456",
+        activity_timeout: 500
+      }
+    })
+
+    send(Pushest.Socket, {:gun_ws, self(), {:text, response}})
+
+    {:reply, :ok, state}
+  end
+
+  def handle_cast({:frame, frame}, state = %{presence: presence}) do
     decoded = Poison.decode!(frame)
     next_presence = decoded["data"]["channel_data"] |> decode_data() |> data(presence)
 
@@ -73,7 +99,7 @@ defmodule Pushest.FakeClient do
             }
           })
 
-        send(parent_pid, {:gun_ws, self(), {:text, response}})
+        send(Pushest.Socket, {:gun_ws, self(), {:text, response}})
 
       _ ->
         nil
@@ -85,9 +111,9 @@ defmodule Pushest.FakeClient do
   defp decode_data(nil), do: nil
   defp decode_data(channel_data), do: Poison.decode!(channel_data)
 
-  defp data(channel_data, _presence) when channel_data == nil, do: %{}
-  defp data(channel_data, _presence) when channel_data == %{}, do: %{}
-  defp data(%{"user_id" => nil}, _presence), do: %{}
+  defp data(channel_data, presence) when channel_data == nil, do: presence
+  defp data(channel_data, presence) when channel_data == %{}, do: presence
+  defp data(%{"user_id" => nil}, presence), do: presence
 
   defp data(%{"user_id" => user_id, "user_info" => user_info}, presence) do
     %{

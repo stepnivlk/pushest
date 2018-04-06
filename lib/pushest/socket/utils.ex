@@ -13,8 +13,6 @@ defmodule Pushest.Socket.Utils do
   two channel types as it's not needed for public channels subscriptions.
   """
   @spec auth(%State{}, String.t(), map) :: nil | String.t()
-  def auth(%State{options: %Options{secret: nil}}, _channel, _user_data), do: nil
-
   def auth(state, channel = "private-" <> _rest, user_data) do
     do_auth(state, channel, user_data)
   end
@@ -49,19 +47,19 @@ defmodule Pushest.Socket.Utils do
 
   ## Examples
 
-      iex> Pushest.Utils.validate_user_data(%{user_id: 1})
+      iex> Pushest.Socket.Utils.validate_user_data(%{user_id: 1})
       {:ok, %{user_id: 1}}
 
-      iex> Pushest.Utils.validate_user_data(%{user_id: "1"})
+      iex> Pushest.Socket.Utils.validate_user_data(%{user_id: "1"})
       {:ok, %{user_id: "1"}}
 
-      iex> Pushest.Utils.validate_user_data(%{user_id: ""})
+      iex> Pushest.Socket.Utils.validate_user_data(%{user_id: ""})
       {:error, %{user_id: ""}}
 
-      iex> Pushest.Utils.validate_user_data(%{user_id: nil})
+      iex> Pushest.Socket.Utils.validate_user_data(%{user_id: nil})
       {:error, %{user_id: nil}}
 
-      iex> Pushest.Utils.validate_user_data(%{})
+      iex> Pushest.Socket.Utils.validate_user_data(%{})
       {:error, %{}}
   """
   @spec validate_user_data(map) :: {:ok, map} | {:error, map}
