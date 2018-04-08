@@ -1,5 +1,8 @@
 defmodule Pushest.Socket do
-  @moduledoc false
+  @moduledoc ~S"""
+  GenServer responsible for communication with Pusher via WebSockets.
+  This module is meant to be used internally as part of the Pushest application.
+  """
 
   require Logger
 
@@ -31,10 +34,6 @@ defmodule Pushest.Socket do
       {:error, msg} ->
         {:stop, "Socket | Connection init error #{inspect(msg)}"}
     end
-  end
-
-  def trigger(channel, event, data) do
-    GenServer.cast(__MODULE__, {:trigger, channel, event, data})
   end
 
   @doc ~S"""
@@ -167,7 +166,7 @@ defmodule Pushest.Socket do
     @client.ws_send(conn_pid, {:text, Frame.encode!(frame)})
   end
 
-  @spec init_state(map) :: %State{}
+  @spec init_state({map, module}) :: %State{}
   defp init_state({pusher_opts, callback_module}) do
     %State{
       options: %Options{} |> Map.merge(pusher_opts),

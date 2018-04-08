@@ -1,5 +1,7 @@
 defmodule Pushest.Socket.Utils do
-  @moduledoc false
+  @moduledoc ~S"""
+  Various Socket-scoped utilities.
+  """
 
   alias Pushest.Socket.Data.{Url, State, SocketInfo}
   alias Pushest.Data.Options

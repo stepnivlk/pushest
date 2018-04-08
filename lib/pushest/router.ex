@@ -1,5 +1,7 @@
 defmodule Pushest.Router do
-  @moduledoc false
+  @moduledoc ~S"""
+  Routes calls/cast from a module using Pushest to either Socket or Api GenServers.
+  """
 
   alias Pushest.{Api, Socket}
 
@@ -7,19 +9,24 @@ defmodule Pushest.Router do
     GenServer.cast(Socket, {:subscribe, channel, user_data})
   end
 
-  def cast({:trigger, channel, event, data}, force_api: true) do
-    GenServer.cast(Api, {:trigger, channel, event, data})
+  def cast({:trigger, channel = "private-" <> _rest, event, data}) do
+    GenServer.cast(client_mod(channel), {:trigger, channel, event, data})
+  end
+
+  def cast({:trigger, channel = "presence-" <> _rest, event, data}) do
+    GenServer.cast(client_mod(channel), {:trigger, channel, event, data})
   end
 
   def cast({:trigger, channel, event, data}) do
-    subscribed = Enum.member?(call(:subscribed_channels), channel)
-    client_mod = if(subscribed, do: Socket, else: Api)
-
-    GenServer.cast(client_mod, {:trigger, channel, event, data})
+    GenServer.cast(Api, {:trigger, channel, event, data})
   end
 
   def cast({:unsubscribe, channel}) do
     GenServer.cast(Socket, {:unsubscribe, channel})
+  end
+
+  def cast({:trigger, channel, event, data}, force_api: true) do
+    GenServer.cast(Api, {:trigger, channel, event, data})
   end
 
   def call(:presence) do
@@ -32,5 +39,10 @@ defmodule Pushest.Router do
 
   def call(:subscribed_channels) do
     GenServer.call(Socket, :channels)
+  end
+
+  defp client_mod(channel) do
+    subscribed = Enum.member?(call(:subscribed_channels), channel)
+    if(subscribed, do: Socket, else: Api)
   end
 end

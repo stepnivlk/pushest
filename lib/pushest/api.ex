@@ -1,5 +1,8 @@
 defmodule Pushest.Api do
-  @moduledoc false
+  @moduledoc ~S"""
+  GenServer responsible for communication with Pusher via REST API endpoint.
+  This module is meant to be used internally as part of the Pushest application.
+  """
 
   use GenServer
 
@@ -33,6 +36,10 @@ defmodule Pushest.Api do
     end
   end
 
+  @doc ~S"""
+  Sync server-side callback handling all the channels listing.
+  """
+  @spec handle_call(atom, {pid, term}, %State{}) :: {:reply, term, %State{}}
   def handle_call(:channels, _from, state = %State{conn_pid: conn_pid, options: options}) do
     path = "GET" |> Utils.full_path("channels", options) |> to_charlist
     stream_ref = @client.get(conn_pid, path, get_headers())
@@ -40,6 +47,11 @@ defmodule Pushest.Api do
     {:reply, client_sync(conn_pid, stream_ref), state}
   end
 
+  @doc ~S"""
+  Async server-side callback handling trigger for given channel/event combination
+  with given data payload.
+  """
+  @spec handle_cast({atom, String.t(), String.t(), map}, %State{}) :: {:noreply, %State{}}
   def handle_cast(
         {:trigger, channel, event, data},
         state = %State{conn_pid: conn_pid, options: options}
@@ -56,6 +68,10 @@ defmodule Pushest.Api do
     {:noreply, state}
   end
 
+  @doc ~S"""
+  Handle various gun responses based on the shape of incoming message.
+  """
+  @spec handle_info(term, %State{}) :: {:noreply, %State{}}
   def handle_info({:gun_response, _conn_pid, _stream_ref, :fin, _status, _headers}, state) do
     # no data
     {:noreply, state}

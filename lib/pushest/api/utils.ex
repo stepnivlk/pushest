@@ -1,11 +1,24 @@
 defmodule Pushest.Api.Utils do
-  @moduledoc false
+  @moduledoc ~S"""
+  Various Api-scoped utilities.
+  """
 
   alias Pushest.Api.Data.Url
   alias Pushest.Api.Timestamp
 
   @auth_version 1.0
 
+  @doc ~S"""
+  Returns url struct for given arguments.
+
+  ## Examples
+
+      iex> Pushest.Api.Utils.url(%{cluster: "eu", encrypted: true})
+      %Pushest.Api.Data.Url{domain: 'api-eu.pusher.com', port: 443}
+
+      iex> Pushest.Api.Utils.url(%{cluster: "us", encrypted: false})
+      %Pushest.Api.Data.Url{domain: 'api-us.pusher.com', port: 80}
+  """
   def url(%{cluster: cluster, encrypted: encrypted}) do
     %Url{
       domain: to_charlist("api-#{cluster}.pusher.com"),

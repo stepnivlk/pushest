@@ -31,12 +31,10 @@ defmodule PushestTest do
     encrypted: true
   }
 
-  def start() do
+  def start do
     {:ok, fake_client_pid} = FakeClient.start_link()
     {:ok, test_pushest_pid} = TestPushest.start_link(@pusher_config)
     Application.ensure_all_started(:pushest)
-
-    # :timer.sleep(500)
 
     api_pid = child_pid(Pushest.Api)
     socket_pid = child_pid(Pushest.Socket)
@@ -128,8 +126,8 @@ defmodule PushestTest do
     end
   end
 
-  @channel "subscribed-trigger-channel-ws"
-  describe "trigger on subscribed channel" do
+  @channel "private-subscribed-trigger-channel"
+  describe "trigger on subscribed private channel" do
     setup do
       TestPushest.subscribe(@channel)
     end
@@ -140,7 +138,7 @@ defmodule PushestTest do
     test "sends an event to a channel", context do
       TestPushest.trigger(@channel, @event, %{message: "message"})
 
-      :sys.get_state(context.socket_pid)
+      wait_for_all(context)
 
       {:ok, frame} = FakeClient.last_frame()
 
@@ -151,7 +149,31 @@ defmodule PushestTest do
     end
   end
 
-  @channel "subscribed-trigger-channel-api"
+  @channel "public-subscribed-trigger-channel"
+  describe "trigger on subscribed public channel" do
+    setup do
+      TestPushest.subscribe(@channel)
+    end
+
+    setup :wait_for_all
+
+    @event "event"
+    test "sends an event to a channel", context do
+      TestPushest.trigger(@channel, @event, %{message: "message"})
+
+      wait_for_all(context)
+
+      {:ok, frame} = FakeClient.last_frame()
+
+      assert frame[:via] == :api
+
+      assert frame[:payload] ==
+               "{\"name\":\"event\",\"data\":\"{\\\"message\\\":\\\"message\\\"}\",\"channel\":\"#{@channel}\"}"
+               ~s({"event":"client-event","data":{"message":"message"},"channel":"#{@channel}"})
+    end
+  end
+
+  @channel "private-subscribed-trigger-channel-api"
   describe "trigger on subscribed channel forced via API" do
     setup do
       TestPushest.subscribe(@channel)
@@ -175,7 +197,7 @@ defmodule PushestTest do
                }\"}"
 
       assert frame[:path] ==
-               '/apps/PUSHER_APP_ID/events?auth_key=PUSHER_APP_KEY&auth_timestamp=123&auth_version=1.0&body_md5=124598aca25a78de5d5be8da13524a73&auth_signature=7c33300b5e24eef958bb54a3f5f9b4b802e38f47ed545fd68b2b6d61c3f823cc'
+               '/apps/PUSHER_APP_ID/events?auth_key=PUSHER_APP_KEY&auth_timestamp=123&auth_version=1.0&body_md5=d1f9b8b45be3308f990149da9e0a5868&auth_signature=98b6de3c177e917375dc4e8a7cca9d2fb2be5cdd9fe61b0231853211cc0a452c'
 
       assert frame[:headers] == [
                {"content-type", "application/json"},

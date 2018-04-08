@@ -1,24 +1,25 @@
 defmodule Pushest do
   @moduledoc ~S"""
-  Pushest handles communication with Pusher server via wesockets. Abstracts
-  un/subscription, client-side triggers, private/presence channel authorizations.
+  Pushest is a Pusher client library leveraging server and client-side features together.
+  Abstracts un/subscription, client-side triggers, private/presence channel authorizations.
   Keeps track of subscribed channels and users presence when subscribed to presence channel.
   Pushest is meant to be used in your module where you can define callbacks for
   events you're interested in.
 
-  A simple implementation would be:
+  A simple implementation in an OTP application would be:
   ```
-  defmodule SimpleClient do
-    use Pushest
+  # Add necessary pusher configuration to your application config:
+  # simple_client/config/config.exs
+  config :simple_client, SimpleClient,
+    pusher_app_id: System.get_env("PUSHER_APP_ID"),
+    pusher_key: System.get_env("PUSHER_APP_KEY"),
+    pusher_secret: System.get_env("PUSHER_SECRET"),
+    pusher_cluster: System.get_env("PUSHER_CLUSTER"),
+    pusher_encrypted: true
 
-    def start_link() do
-      options = %{
-        cluster: "eu",
-        encrypted: true,
-        secret: "SECRET"
-      }
-      Pushest.start_link("APP_KEY", options, __MODULE__, name: __MODULE__)
-    end
+  # simple_client/simple_client.ex
+  defmodule SimpleClient do
+    use Pushest, otp_app: :simple_client
 
     def handle_event({:ok, "public-channel", "some-event"}, frame) do
       # do something with public frame
@@ -28,19 +29,43 @@ defmodule Pushest do
       # do something with private frame
     end
   end
+
+  # Now you can start your application with Pushest as a part of your supervision tree:
+  # simple_client/lib/simple_client/application.ex
+  def start(_type, _args) do
+    children = [
+      {SimpleClient, []}
+    ]
+
+    opts = [strategy: :one_for_one, name: Sup.Supervisor]
+    Supervisor.start_link(children, opts)
+  end
+  ```
+
+  You can also provide Pusher options directly via start_link/1 (without using OTP app configuration):
+  ```
+  config = %{
+    app_id:  System.get_env("PUSHER_APP_ID"),
+    key: System.get_env("PUSHER_APP_KEY"),
+    secret: System.get_env("PUSHER_SECRET"),
+    cluster: System.get_env("PUSHER_CLUSTER"),
+    encrypted: true
+  }
+
+  {:ok, pid} = SimpleClient.start_link(config)
+  ```
+
+  Now you can interact with Pusher:
+  ```
+  SimpleClient.trigger("private-channel", "event", %{message: "via api"}) 
+  SimpleClient.channels()
+  # => %{"channels" => %{"public-channel" => %{}}}
+  SimpleClient.subscribe("private-channel")
+  SimpleClient.trigger("private-channel", "event", %{message: "via ws"}) 
+  SimpleClient.trigger("private-channel", "event", %{message: "via api"}, force_api: true) 
+  # ...
   ```
   """
-
-  @typedoc ~S"""
-  Options for Pushest to properly communicate with Pusher server.
-
-  - `:cluster` - Cluster where your Pusher app is configured.
-  - `:encrypted` - When set to true communication with Pusher is fully encrypted.
-  - `:secret` - Necessary to subscribe to private/presence channels and trigger events.
-  """
-  @type pusher_opts :: %{cluster: String.t(), encrypted: boolean, secret: String.t()}
-
-  require Logger
 
   alias Pushest.Router
 
@@ -51,19 +76,45 @@ defmodule Pushest do
 
   defmacro __using__(opts) do
     quote bind_quoted: [opts: opts] do
+      @typedoc ~S"""
+      Options for Pushest to properly communicate with Pusher server.
+
+      - `:app_id` - Pusher Application ID.
+      - `:key` - Pusher Application key.
+      - `:secret` - Necessary to subscribe to private/presence channels and trigger events.
+      - `:cluster` - Cluster where your Pusher app is configured.
+      - `:encrypted` - When set to true communication with Pusher is fully encrypted.
+      """
+      @type pusher_opts :: %{
+        app_id: String.t(),
+        secret: String.t(),
+        key: String.t(),
+        cluster: String.t(),
+        encrypted: boolean
+      }
+
+      @typedoc ~S"""
+      Optional options for trigger function.
+
+      - `:force_api` - Always triggers via Pusher REST API endpoint when set to `true`
+      """
+      @type trigger_opts :: [:force_api]
+
       @behaviour Pushest
 
       @config Pushest.Supervisor.config(__MODULE__, opts)
 
       @doc ~S"""
-      Starts a Pushest process linked to current process.
-      Please note, you need to provide a module as a third element, Pushest will try
-      to invoke `handle_event` callbacks in that module when Pusher event occurs.
+      Starts a Pushest Supervisor process linked to current process.
+      Can be started as a part of host application supervision tree.
+      Pusher options can be passed as an argument or can be provided in an OTP
+      application config.
 
       For available pusher_opts values see `t:pusher_opts/0`.
       """
-      def start_link(pusher_config) when is_map(pusher_config) do
-        Pushest.Supervisor.start_link(pusher_config, __MODULE__)
+      @spec start_link(pusher_opts) :: {:ok, pid} | {:error, term}
+      def start_link(pusher_opts) when is_map(pusher_opts) do
+        Pushest.Supervisor.start_link(pusher_opts, __MODULE__)
       end
 
       def start_link(_) do
@@ -78,38 +129,88 @@ defmodule Pushest do
         }
       end
 
+      @doc ~S"""
+      Subscribe to a channel with user_data as a map. When subscribing to a
+      presence- channel user_id key with unique identifier as a value has to be
+      provided in the user_data map. user_info key can contain a map with optional
+      informations about user.
+      E.g.: %{user_id: "1", user_info: %{name: "Tomas Koutsky"}}
+      """
+      @spec subscribe(String.t(), map) :: term
       def subscribe(channel, user_data) do
         Router.cast({:subscribe, channel, user_data})
       end
 
+      @doc ~S"""
+      Subscribe to a channel without any user data, like any public channel.
+      """
+      @spec subscribe(String.t()) :: term
       def subscribe(channel) do
         Router.cast({:subscribe, channel, %{}})
       end
 
+      @doc ~S"""
+      Trigger on given channel/event combination - sends given data to Pusher.
+      data has to be a map.
+      """
+      @spec trigger(String.t(), String.t(), map) :: term
       def trigger(channel, event, data) do
         Router.cast({:trigger, channel, event, data})
       end
 
+      @doc ~S"""
+      Same as trigger/3 but adds a possiblity to enforce triggering via API endpoint.
+      For enforced API trigger provide `force_api: true` as an `opts`.
+      E.g.: `Mod.trigger("channel", "event", %{message: "m"}, force_api: true)`
+
+      For trigger_opts values see `t:trigger_opts/0`.
+      """
+      @spec trigger(String.t(), String.t(), map, trigger_opts) :: term
       def trigger(channel, event, data, opts) do
         Router.cast({:trigger, channel, event, data}, opts)
       end
 
+      @doc ~S"""
+      Returns all the channels anyone is using, calls Pusher via REST API.
+      """
       def channels do
         Router.call(:channels)
       end
 
+      @doc ~S"""
+      Returns only the channels this client is subscribed to.
+      """
       def subscribed_channels do
         Router.call(:subscribed_channels)
       end
 
+      @doc ~S"""
+      Returns information about all the users subscribed to a presence channels
+      this client is subscribed to.
+      """
       def presence do
         Router.call(:presence)
       end
 
+      @doc ~S"""
+      Unsubscribes from a channel
+      """
       def unsubscribe(channel) do
         Router.cast({:unsubscribe, channel})
       end
 
+      @doc ~S"""
+      Function meant to be overwritten in user module, e.g.:
+      ```
+      defmodule MyMod do
+        use Pushest, otp_app: :my_mod
+
+        handle_event({:ok, "my-channel, "my-event"}, frame) do
+          # Do something with a frame here.
+        end
+      end
+      ```
+      """
       def handle_event({status, channel, event}, frame) do
         require Logger
 
