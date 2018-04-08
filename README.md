@@ -30,7 +30,7 @@ Please note, this library is **BETA**
 
 ## Usage
 ### A simple implementation in an OTP application would be:
-```
+```elixir
 # Add necessary pusher configuration to your application config:
 # simple_client/config/config.exs
 config :simple_client, SimpleClient,
