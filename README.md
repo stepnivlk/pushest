@@ -1,6 +1,6 @@
 # Pushest
 
-Pushest is a bidirectional Pusher client leveraging Elixir/OTP to combine server and client-side
+Pushest is bidirectional Pusher client leveraging Elixir/OTP to combine server and client-side
 Pusher features together in one library. Pushest communicates both via WebSockets and REST API.
 You can trigger on any channel but also subscribe to channels, handle events using callbacks or
 keep track of presence.
