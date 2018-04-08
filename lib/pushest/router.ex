@@ -7,6 +7,10 @@ defmodule Pushest.Router do
     GenServer.cast(Socket, {:subscribe, channel, user_data})
   end
 
+  def cast({:trigger, channel, event, data}, force_api: true) do
+    GenServer.cast(Api, {:trigger, channel, event, data})
+  end
+
   def cast({:trigger, channel, event, data}) do
     subscribed = Enum.member?(call(:subscribed_channels), channel)
     client_mod = if(subscribed, do: Socket, else: Api)

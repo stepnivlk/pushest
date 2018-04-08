@@ -6,7 +6,13 @@ defmodule Pushest.FakeClient do
   def start_link() do
     GenServer.start_link(
       __MODULE__,
-      %{await_up: :ok, last_frame: nil, presence: %{count: 0, hash: %{}, ids: []}},
+      %{
+        await_up: :ok,
+        last_frame: nil,
+        fail_unsubscribe: false,
+        channels: %{},
+        presence: %{count: 0, hash: %{}, ids: []}
+      },
       name: __MODULE__
     )
   end
@@ -31,7 +37,7 @@ defmodule Pushest.FakeClient do
     GenServer.call(__MODULE__, :establish_connection)
   end
 
-  ## Fake methods
+  ## WS Fake methods
 
   def await_up(_pid) do
     GenServer.call(__MODULE__, :await_up)
@@ -42,7 +48,31 @@ defmodule Pushest.FakeClient do
   end
 
   def ws_send(_conn_pid, {:text, frame}) do
-    GenServer.cast(__MODULE__, {:frame, frame})
+    GenServer.cast(__MODULE__, {:ws, %{payload: frame, via: :ws}})
+  end
+
+  ## API Fake methods
+
+  def post(_pid, path, headers, frame) do
+    GenServer.cast(
+      __MODULE__,
+      {:api, %{payload: frame, via: :api, path: path, headers: headers}}
+    )
+  end
+
+  def get(_pid, path, headers) do
+    GenServer.call(
+      __MODULE__,
+      {:api, %{via: :api, path: path, headers: headers}}
+    )
+  end
+
+  def await(_conn_pid, _stream_ref) do
+    {:response, :nofin, 200, []}
+  end
+
+  def await_body(_conn_pid, _stream_ref) do
+    {:ok, Poison.encode!(GenServer.call(__MODULE__, :channels))}
   end
 
   ## Server callbacks
@@ -85,18 +115,46 @@ defmodule Pushest.FakeClient do
     {:reply, :ok, state}
   end
 
-  def handle_cast({:frame, frame}, state = %{presence: presence}) do
-    decoded = Poison.decode!(frame)
+  def handle_call({:api, frame}, _from, state) do
+    {:reply, :ok, Map.merge(state, %{last_frame: frame})}
+  end
+
+  def handle_call(:channels, _from, state = %{channels: channels}) do
+    {:reply, %{channels: channels}, state}
+  end
+
+  def handle_cast({:api, frame}, state) do
+    {:noreply, Map.merge(state, %{last_frame: frame})}
+  end
+
+  def handle_cast(
+        {:ws, frame = %{payload: payload}},
+        state = %{presence: presence, fail_unsubscribe: fail_unsubscribe}
+      ) do
+    decoded = Poison.decode!(payload)
     next_presence = decoded["data"]["channel_data"] |> decode_data() |> data(presence)
+    channel = decoded["data"]["channel"]
 
     case decoded["event"] do
       "pusher:subscribe" ->
         response =
           Poison.encode!(%{
             event: "pusher_internal:subscription_succeeded",
-            channel: decoded["data"]["channel"],
+            channel: channel,
             data: %{
               presence: next_presence
+            }
+          })
+
+        send(Pushest.Socket, {:gun_ws, self(), {:text, response}})
+
+      "pusher:unsubscribe" when fail_unsubscribe ->
+        response =
+          Poison.encode!(%{
+            event: "pusher:error",
+            data: %{
+              message:
+                "No current subscription to channel #{channel}, or subscription in progress"
             }
           })
 

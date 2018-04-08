@@ -90,6 +90,10 @@ defmodule Pushest do
         Router.cast({:trigger, channel, event, data})
       end
 
+      def trigger(channel, event, data, opts) do
+        Router.cast({:trigger, channel, event, data}, opts)
+      end
+
       def channels do
         Router.call(:channels)
       end

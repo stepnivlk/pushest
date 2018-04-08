@@ -29,7 +29,7 @@ defmodule Pushest.Socket do
         {:ok, %{state | conn_pid: conn_pid}}
 
       {:error, msg} ->
-        {:stop, "Connection init error #{inspect(msg)}"}
+        {:stop, "Socket | Connection init error #{inspect(msg)}"}
     end
   end
 
@@ -48,7 +48,7 @@ defmodule Pushest.Socket do
 
       {:error, _} ->
         Logger.error(
-          "#{channel} is a presence channel and subscription must include channel_data"
+          "Socket | #{channel} is a presence channel and subscription must include channel_data"
         )
     end
 
@@ -112,24 +112,25 @@ defmodule Pushest.Socket do
 
     case frame.event do
       "pusher:connection_established" ->
-        Logger.debug("pusher:connection_established")
+        Logger.debug("Socket | pusher:connection_established")
         {:noreply, %{state | socket_info: SocketInfo.decode(frame.data)}}
 
       "pusher_internal:subscription_succeeded" ->
+        Logger.debug("Socket | pusher_internal:subscription_succeeded")
         presence = Presence.merge(presence, frame.data["presence"])
         {:noreply, %{state | channels: [frame.channel | channels], presence: presence}}
 
       "pusher_internal:member_added" ->
-        Logger.debug("pusher_internal:member_added")
+        Logger.debug("Socket | pusher_internal:member_added")
         {:noreply, %{state | presence: Presence.add_member(presence, frame.data)}}
 
       "pusher_internal:member_removed" ->
-        Logger.debug("pusher_internal:member_removed")
+        Logger.debug("Socket | pusher_internal:member_removed")
         {:noreply, %{state | presence: Presence.remove_member(presence, frame.data)}}
 
       "pusher:error" ->
         message = Map.get(frame.data, "message")
-        Logger.debug(fn -> "pusher:error #{inspect(message)}" end)
+        Logger.error(fn -> "Socket | pusher:error #{inspect(message)}" end)
 
         Pushest.Utils.try_callback(callback_module, :handle_event, [{:error, message}, frame])
         {:noreply, state}
@@ -144,8 +145,17 @@ defmodule Pushest.Socket do
     end
   end
 
+  def handle_info(
+        {:gun_up, _pid, _protocol},
+        state = %State{conn_pid: conn_pid, url: %Url{path: path}}
+      ) do
+    Logger.debug(fn -> "Socket | :gun_up | upgrading to ws" end)
+    @client.ws_upgrade(conn_pid, path)
+    {:noreply, state}
+  end
+
   def handle_info(params, state) do
-    Logger.debug(fn -> "pusher:event #{inspect(params)}" end)
+    Logger.debug(fn -> "Socket | #{inspect(params)}" end)
     {:noreply, state}
   end
 

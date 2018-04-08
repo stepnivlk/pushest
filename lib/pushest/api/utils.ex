@@ -2,6 +2,7 @@ defmodule Pushest.Api.Utils do
   @moduledoc false
 
   alias Pushest.Api.Data.Url
+  alias Pushest.Api.Timestamp
 
   @auth_version 1.0
 
@@ -13,7 +14,7 @@ defmodule Pushest.Api.Utils do
   end
 
   def full_path(verb, path, %{app_id: app_id, key: key, secret: secret}, frame \\ "") do
-    auth_timestamp = DateTime.to_unix(DateTime.utc_now())
+    auth_timestamp = Timestamp.for_env()
 
     frame_md5 = :crypto.hash(:md5, frame) |> Base.encode16(case: :lower)
 

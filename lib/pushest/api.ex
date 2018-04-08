@@ -29,7 +29,7 @@ defmodule Pushest.Api do
         {:ok, %{state | conn_pid: conn_pid}}
 
       {:error, msg} ->
-        {:stop, "Connection init error #{inspect(msg)}"}
+        {:stop, "Api | Connection init error #{inspect(msg)}"}
     end
   end
 
@@ -67,7 +67,7 @@ defmodule Pushest.Api do
       ) do
     case status do
       200 -> {:ok, _body} = :gun.await_body(conn_pid, stream_ref)
-      _ -> Logger.error("Pusher API status #{status}")
+      _ -> Logger.error("Api | Pusher response status #{inspect(status)}")
     end
 
     {:noreply, state}
@@ -77,17 +77,17 @@ defmodule Pushest.Api do
         {:gun_down, _conn_pid, _protocol, reason, _killed_streams, _unprocessed_streams},
         state
       ) do
-    Logger.error(":gun_down #{reason}")
+    Logger.error(":gun_down #{inspect(reason)}")
     {:noreply, state}
   end
 
   def handle_info({:DOWN, _ref, :process, _object, reason}, state) do
-    Logger.error(":DOWN #{reason}")
+    Logger.error("Api | :DOWN #{inspect(reason)}")
     {:noreply, state}
   end
 
   def handle_info({:gun_up, _conn_pid, protocol}, state) do
-    Logger.debug(fn -> ":gun_up #{protocol}" end)
+    Logger.debug(fn -> "Api | :gun_up #{inspect(protocol)}" end)
     {:noreply, state}
   end
 
