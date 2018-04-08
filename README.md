@@ -57,7 +57,7 @@ defmodule SimpleClient do
   
   # We can also catch errors.
   def handle_event({:error, msg}, frame) do
-    Logger.error("Pusher frame error #{msg}: #{inspect(frame)}")
+    # do something with error
   end
 end
 
