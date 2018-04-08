@@ -54,6 +54,11 @@ defmodule SimpleClient do
   def handle_event({:ok, "private-channel", "some-other-event"}, frame) do
     # do something with private frame
   end
+  
+  # We can also catch errors.
+  def handle_event({:error, msg}, frame) do
+    Logger.error("Pusher frame error #{msg}: #{inspect(frame)}")
+  end
 end
 
 # Now you can start your application with Pushest as a part of your supervision tree:
