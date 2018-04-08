@@ -6,7 +6,7 @@ defmodule Pushest.Api.Timestamp do
   @constant_timestamp 123
 
   def for_env do
-    if Application.get_env(:pushest, :fake_all) do
+    if Application.get_env(:pushest, :pushest_test_fake_all) do
       @constant_timestamp
     else
       DateTime.to_unix(DateTime.utc_now())

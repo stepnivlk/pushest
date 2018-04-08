@@ -1,3 +1,3 @@
 use Mix.Config
 
-config :pushest, fake_all: true
+config :pushest, pushest_test_fake_all: true

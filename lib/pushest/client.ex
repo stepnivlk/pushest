@@ -4,7 +4,7 @@ defmodule Pushest.Client do
   """
 
   def for_env do
-    if Application.get_env(:pushest, :fake_all) do
+    if Application.get_env(:pushest, :pushest_test_fake_all) do
       Pushest.FakeClient
     else
       :gun

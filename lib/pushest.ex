@@ -86,19 +86,19 @@ defmodule Pushest do
       - `:encrypted` - When set to true communication with Pusher is fully encrypted.
       """
       @type pusher_opts :: %{
-        app_id: String.t(),
-        secret: String.t(),
-        key: String.t(),
-        cluster: String.t(),
-        encrypted: boolean
-      }
+              app_id: String.t(),
+              secret: String.t(),
+              key: String.t(),
+              cluster: String.t(),
+              encrypted: boolean
+            }
 
       @typedoc ~S"""
       Optional options for trigger function.
 
       - `:force_api` - Always triggers via Pusher REST API endpoint when set to `true`
       """
-      @type trigger_opts :: [:force_api]
+      @type trigger_opts :: [force_api: boolean]
 
       @behaviour Pushest
 

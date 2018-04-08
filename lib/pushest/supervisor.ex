@@ -22,12 +22,12 @@ defmodule Pushest.Supervisor do
   end
 
   @type pusher_opts :: %{
-    app_id: String.t(),
-    secret: String.t(),
-    key: String.t(),
-    cluster: String.t(),
-    encrypted: boolean
-  }
+          app_id: String.t(),
+          secret: String.t(),
+          key: String.t(),
+          cluster: String.t(),
+          encrypted: boolean
+        }
 
   @doc ~S"""
   Fetches necessary Pusher configuration from a host OTP application config.

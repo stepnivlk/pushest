@@ -168,8 +168,11 @@ defmodule PushestTest do
       assert frame[:via] == :api
 
       assert frame[:payload] ==
-               "{\"name\":\"event\",\"data\":\"{\\\"message\\\":\\\"message\\\"}\",\"channel\":\"#{@channel}\"}"
-               ~s({"event":"client-event","data":{"message":"message"},"channel":"#{@channel}"})
+               "{\"name\":\"event\",\"data\":\"{\\\"message\\\":\\\"message\\\"}\",\"channel\":\"#{
+                 @channel
+               }\"}"
+
+      ~s({"event":"client-event","data":{"message":"message"},"channel":"#{@channel}"})
     end
   end
 
