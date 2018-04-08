@@ -74,7 +74,7 @@ end
 ```
 
 ### You can also provide Pusher options directly via start_link/1 (without using OTP app configuration):
-```
+```elixir
 config = %{
   app_id:  System.get_env("PUSHER_APP_ID"),
   key: System.get_env("PUSHER_APP_KEY"),
