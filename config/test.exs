@@ -1,3 +1,3 @@
 use Mix.Config
 
-config :pushest, conn_client: Pushest.FakeClient
+config :pushest, pushest_test_fake_all: true

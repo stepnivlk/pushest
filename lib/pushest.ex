@@ -1,24 +1,25 @@
 defmodule Pushest do
   @moduledoc ~S"""
-  Pushest handles communication with Pusher server via wesockets. Abstracts
-  un/subscription, client-side triggers, private/presence channel authorizations.
+  Pushest is a Pusher client library leveraging server and client-side features together.
+  Abstracts un/subscription, client-side triggers, private/presence channel authorizations.
   Keeps track of subscribed channels and users presence when subscribed to presence channel.
   Pushest is meant to be used in your module where you can define callbacks for
   events you're interested in.
 
-  A simple implementation would be:
+  A simple implementation in an OTP application would be:
   ```
-  defmodule SimpleClient do
-    use Pushest
+  # Add necessary pusher configuration to your application config:
+  # simple_client/config/config.exs
+  config :simple_client, SimpleClient,
+    pusher_app_id: System.get_env("PUSHER_APP_ID"),
+    pusher_key: System.get_env("PUSHER_APP_KEY"),
+    pusher_secret: System.get_env("PUSHER_SECRET"),
+    pusher_cluster: System.get_env("PUSHER_CLUSTER"),
+    pusher_encrypted: true
 
-    def start_link() do
-      options = %{
-        cluster: "eu",
-        encrypted: true,
-        secret: "SECRET"
-      }
-      Pushest.start_link("APP_KEY", options, __MODULE__, name: __MODULE__)
-    end
+  # simple_client/simple_client.ex
+  defmodule SimpleClient do
+    use Pushest, otp_app: :simple_client
 
     def handle_event({:ok, "public-channel", "some-event"}, frame) do
       # do something with public frame
@@ -28,84 +29,188 @@ defmodule Pushest do
       # do something with private frame
     end
   end
+
+  # Now you can start your application with Pushest as a part of your supervision tree:
+  # simple_client/lib/simple_client/application.ex
+  def start(_type, _args) do
+    children = [
+      {SimpleClient, []}
+    ]
+
+    opts = [strategy: :one_for_one, name: Sup.Supervisor]
+    Supervisor.start_link(children, opts)
+  end
+  ```
+
+  You can also provide Pusher options directly via start_link/1 (without using OTP app configuration):
+  ```
+  config = %{
+    app_id:  System.get_env("PUSHER_APP_ID"),
+    key: System.get_env("PUSHER_APP_KEY"),
+    secret: System.get_env("PUSHER_SECRET"),
+    cluster: System.get_env("PUSHER_CLUSTER"),
+    encrypted: true
+  }
+
+  {:ok, pid} = SimpleClient.start_link(config)
+  ```
+
+  Now you can interact with Pusher:
+  ```
+  SimpleClient.trigger("private-channel", "event", %{message: "via api"}) 
+  SimpleClient.channels()
+  # => %{"channels" => %{"public-channel" => %{}}}
+  SimpleClient.subscribe("private-channel")
+  SimpleClient.trigger("private-channel", "event", %{message: "via ws"}) 
+  SimpleClient.trigger("private-channel", "event", %{message: "via api"}, force_api: true) 
+  # ...
   ```
   """
 
-  @typedoc ~S"""
-  Options for Pushest to properly communicate with Pusher server.
-
-  - `:cluster` - Cluster where your Pusher app is configured.
-  - `:encrypted` - When set to true communication with Pusher is fully encrypted.
-  - `:secret` - Necessary to subscribe to private/presence channels and trigger events.
-  """
-  @type pusher_opts :: %{cluster: String.t(), encrypted: boolean, secret: String.t()}
-
-  use GenServer
-
-  require Logger
-
-  alias Pushest.Data.{State, Frame, SocketInfo, Options, Url, Presence}
-  alias Pushest.Utils
-
-  @client Application.get_env(:pushest, :conn_client)
+  alias Pushest.Router
 
   @doc ~S"""
   Invoked when the Pusher event occurs (e.g. other client sends a message).
   """
   @callback handle_event({atom, String.t(), String.t()}, term) :: term
 
-  defmacro __using__(_opts) do
-    quote do
+  defmacro __using__(opts) do
+    quote bind_quoted: [opts: opts] do
+      @typedoc ~S"""
+      Options for Pushest to properly communicate with Pusher server.
+
+      - `:app_id` - Pusher Application ID.
+      - `:key` - Pusher Application key.
+      - `:secret` - Necessary to subscribe to private/presence channels and trigger events.
+      - `:cluster` - Cluster where your Pusher app is configured.
+      - `:encrypted` - When set to true communication with Pusher is fully encrypted.
+      """
+      @type pusher_opts :: %{
+              app_id: String.t(),
+              secret: String.t(),
+              key: String.t(),
+              cluster: String.t(),
+              encrypted: boolean
+            }
+
+      @typedoc ~S"""
+      Optional options for trigger function.
+
+      - `:force_api` - Always triggers via Pusher REST API endpoint when set to `true`
+      """
+      @type trigger_opts :: [force_api: boolean]
+
       @behaviour Pushest
 
-      def subscribe(pid, channel, user_data) do
-        GenServer.cast(pid, {:subscribe, channel, user_data})
+      @config Pushest.Supervisor.config(__MODULE__, opts)
+
+      @doc ~S"""
+      Starts a Pushest Supervisor process linked to current process.
+      Can be started as a part of host application supervision tree.
+      Pusher options can be passed as an argument or can be provided in an OTP
+      application config.
+
+      For available pusher_opts values see `t:pusher_opts/0`.
+      """
+      @spec start_link(pusher_opts) :: {:ok, pid} | {:error, term}
+      def start_link(pusher_opts) when is_map(pusher_opts) do
+        Pushest.Supervisor.start_link(pusher_opts, __MODULE__)
       end
 
-      def subscribe(pid, channel) when is_pid(pid) do
-        GenServer.cast(pid, {:subscribe, channel, %{}})
+      def start_link(_) do
+        Pushest.Supervisor.start_link(@config, __MODULE__)
       end
 
+      def child_spec(opts) do
+        %{
+          id: __MODULE__,
+          start: {__MODULE__, :start_link, [opts]},
+          type: :supervisor
+        }
+      end
+
+      @doc ~S"""
+      Subscribe to a channel with user_data as a map. When subscribing to a
+      presence- channel user_id key with unique identifier as a value has to be
+      provided in the user_data map. user_info key can contain a map with optional
+      informations about user.
+      E.g.: %{user_id: "1", user_info: %{name: "Tomas Koutsky"}}
+      """
+      @spec subscribe(String.t(), map) :: term
       def subscribe(channel, user_data) do
-        GenServer.cast(__MODULE__, {:subscribe, channel, user_data})
+        Router.cast({:subscribe, channel, user_data})
       end
 
+      @doc ~S"""
+      Subscribe to a channel without any user data, like any public channel.
+      """
+      @spec subscribe(String.t()) :: term
       def subscribe(channel) do
-        GenServer.cast(__MODULE__, {:subscribe, channel, %{}})
+        Router.cast({:subscribe, channel, %{}})
       end
 
-      def trigger(pid, channel, event, data) do
-        GenServer.cast(pid, {:trigger, channel, event, data})
-      end
-
+      @doc ~S"""
+      Trigger on given channel/event combination - sends given data to Pusher.
+      data has to be a map.
+      """
+      @spec trigger(String.t(), String.t(), map) :: term
       def trigger(channel, event, data) do
-        GenServer.cast(__MODULE__, {:trigger, channel, event, data})
+        Router.cast({:trigger, channel, event, data})
       end
 
-      def channels(pid) do
-        GenServer.call(pid, :channels)
+      @doc ~S"""
+      Same as trigger/3 but adds a possiblity to enforce triggering via API endpoint.
+      For enforced API trigger provide `force_api: true` as an `opts`.
+      E.g.: `Mod.trigger("channel", "event", %{message: "m"}, force_api: true)`
+
+      For trigger_opts values see `t:trigger_opts/0`.
+      """
+      @spec trigger(String.t(), String.t(), map, trigger_opts) :: term
+      def trigger(channel, event, data, opts) do
+        Router.cast({:trigger, channel, event, data}, opts)
       end
 
+      @doc ~S"""
+      Returns all the channels anyone is using, calls Pusher via REST API.
+      """
       def channels do
-        GenServer.call(__MODULE__, :channels)
+        Router.call(:channels)
       end
 
-      def presence(pid) do
-        GenServer.call(pid, :presence)
+      @doc ~S"""
+      Returns only the channels this client is subscribed to.
+      """
+      def subscribed_channels do
+        Router.call(:subscribed_channels)
       end
 
+      @doc ~S"""
+      Returns information about all the users subscribed to a presence channels
+      this client is subscribed to.
+      """
       def presence do
-        GenServer.call(__MODULE__, :presence)
+        Router.call(:presence)
       end
 
-      def unsubscribe(pid, channel) do
-        GenServer.cast(pid, {:unsubscribe, channel})
-      end
-
+      @doc ~S"""
+      Unsubscribes from a channel
+      """
       def unsubscribe(channel) do
-        GenServer.cast(__MODULE__, {:unsubscribe, channel})
+        Router.cast({:unsubscribe, channel})
       end
 
+      @doc ~S"""
+      Function meant to be overwritten in user module, e.g.:
+      ```
+      defmodule MyMod do
+        use Pushest, otp_app: :my_mod
+
+        handle_event({:ok, "my-channel, "my-event"}, frame) do
+          # Do something with a frame here.
+        end
+      end
+      ```
+      """
       def handle_event({status, channel, event}, frame) do
         require Logger
 
@@ -118,175 +223,5 @@ defmodule Pushest do
 
       defoverridable handle_event: 2
     end
-  end
-
-  @doc ~S"""
-  Starts a Pushest process linked to current process.
-  Please note, you need to provide a module as a third element, Pushest will try
-  to invoke `handle_event` callbacks in that module when Pusher event occurs.
-
-  For available pusher_opts values see `t:pusher_opts/0`.
-  """
-  @spec start_link(String.t(), pusher_opts, module, list) :: {:ok, pid} | {:error, term}
-  def start_link(app_key, pusher_opts, module, opts \\ []) do
-    state = init_state(app_key, pusher_opts, module)
-
-    GenServer.start_link(__MODULE__, state, opts)
-  end
-
-  @doc ~S"""
-  Starts the @client connection to the Pusher URL and upgrades it to WS/S communication.
-  Stores @client.conn PID in the state.
-  """
-  @spec init(%State{}) :: {:ok, %State{}}
-  def init(state = %State{url: %Url{domain: domain, path: path, port: port}}) do
-    {:ok, conn_pid} = @client.open(domain, port)
-
-    case @client.await_up(conn_pid) do
-      {:ok, :http} ->
-        @client.ws_upgrade(conn_pid, path)
-        {:ok, %{state | conn_pid: conn_pid}}
-
-      {:error, msg} ->
-        {:stop, "Connection init error #{inspect(msg)}"}
-    end
-  end
-
-  @doc ~S"""
-  Async server-side callback handling un/subscriptions and triggers to a Pusher channel.
-  """
-  @spec handle_cast({atom, String.t(), map}, %State{}) :: {:noreply, %State{}}
-  def handle_cast({:subscribe, channel = "presence-" <> _rest, user_data}, state) do
-    case Utils.validate_user_data(user_data) do
-      {:ok, user_data} ->
-        do_subscribe(channel, user_data, state)
-
-      {:error, _} ->
-        Logger.error(
-          "#{channel} is a presence channel and subscription must include channel_data"
-        )
-    end
-
-    {:noreply, %{state | presence: %{state.presence | me: user_data}}}
-  end
-
-  def handle_cast({:subscribe, channel, user_data}, state) do
-    do_subscribe(channel, user_data, state)
-    {:noreply, state}
-  end
-
-  def handle_cast({:unsubscribe, channel}, state = %State{conn_pid: conn_pid, channels: channels}) do
-    frame = channel |> Frame.unsubscribe() |> Frame.encode!()
-
-    @client.ws_send(conn_pid, {:text, frame})
-
-    {:noreply, %{state | channels: List.delete(channels, channel)}}
-  end
-
-  def handle_cast({:trigger, channel, event, data}, state = %State{conn_pid: conn_pid}) do
-    frame =
-      channel
-      |> Frame.event(event, data)
-      |> Frame.encode!()
-
-    @client.ws_send(conn_pid, {:text, frame})
-
-    {:noreply, state}
-  end
-
-  @doc ~S"""
-  Sync server-side callback returning list of subscribed channels.
-  """
-  @spec handle_call(:channels | :presence, {pid, term}, %State{}) ::
-          {:reply, list | %Presence{}, %State{}}
-  def handle_call(:channels, _from, state = %State{channels: channels}) do
-    {:reply, channels, state}
-  end
-
-  @doc ~S"""
-  Sync server-side callback returning current presence information.
-  Contains IDs of all the subscribed users and optional informations about them.
-  """
-  def handle_call(:presence, _from, state = %State{presence: presence}) do
-    {:reply, presence, state}
-  end
-
-  @spec handle_info(term, %State{}) :: {:noreply, %State{}}
-  def handle_info({:gun_ws_upgrade, _conn_pid, :ok, _headers}, state) do
-    {:noreply, state}
-  end
-
-  @doc ~S"""
-  Handles varios Pusher events, updates state and tries to call user-defined callbacks.
-  """
-  def handle_info(
-        {:gun_ws, _conn_pid, {:text, raw_frame}},
-        state = %State{module: module, channels: channels, presence: presence}
-      ) do
-    frame = Frame.decode!(raw_frame)
-
-    case frame.event do
-      "pusher:connection_established" ->
-        Logger.debug("pusher:connection_established")
-        {:noreply, %{state | socket_info: SocketInfo.decode(frame.data)}}
-
-      "pusher_internal:subscription_succeeded" ->
-        presence = Presence.merge(presence, frame.data["presence"])
-        {:noreply, %{state | channels: [frame.channel | channels], presence: presence}}
-
-      "pusher_internal:member_added" ->
-        Logger.debug("pusher_internal:member_added")
-        {:noreply, %{state | presence: Presence.add_member(presence, frame.data)}}
-
-      "pusher_internal:member_removed" ->
-        Logger.debug("pusher_internal:member_removed")
-        {:noreply, %{state | presence: Presence.remove_member(presence, frame.data)}}
-
-      "pusher:error" ->
-        message = Map.get(frame.data, "message")
-        Logger.debug(fn -> "pusher:error #{inspect(message)}" end)
-        try_callback(module, :handle_event, [{:error, message}, frame])
-        {:noreply, state}
-
-      _ ->
-        try_callback(module, :handle_event, [{:ok, frame.channel, frame.event}, frame])
-        {:noreply, state}
-    end
-  end
-
-  def handle_info(params, state) do
-    Logger.debug(fn -> "pusher:event #{inspect(params)}" end)
-    {:noreply, state}
-  end
-
-  @spec init_state(String.t(), map, module) :: %State{}
-  defp init_state(app_key, options, module) do
-    %State{
-      app_key: app_key,
-      url: Utils.url(app_key, options),
-      options: %Options{} |> Map.merge(options),
-      module: module
-    }
-  end
-
-  @spec do_subscribe(String.t(), map, %State{}) :: term
-  defp do_subscribe(channel, user_data, state = %State{conn_pid: conn_pid}) do
-    auth = Utils.auth(state, channel, user_data)
-    frame = Frame.subscribe(channel, auth, user_data)
-
-    @client.ws_send(conn_pid, {:text, Frame.encode!(frame)})
-  end
-
-  @spec try_callback(module, atom, list) :: term
-  defp try_callback(module, function, args) do
-    apply(module, function, args)
-  catch
-    :error, payload ->
-      stacktrace = System.stacktrace()
-      reason = Exception.normalize(:error, payload, stacktrace)
-      {:"$EXIT", {reason, stacktrace}}
-
-    :exit, payload ->
-      {:"$EXIT", payload}
   end
 end
