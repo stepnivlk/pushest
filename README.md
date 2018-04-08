@@ -1,8 +1,13 @@
 # Pushest
 
+Pushest is a bidirectional Pusher client leveraging Elixir/OTP to combine server and client-side
+Pusher features together in one library. Pushest communicates both via WebSockets and REST API.
+You can trigger on any channel but also subscribe to channels, handle events using callbacks or
+keep track of presence.
+
 [![Build Status](https://travis-ci.org/stepnivlk/pushest.svg?branch=master)](https://travis-ci.org/stepnivlk/pushest) [![Ebert](https://ebertapp.io/github/stepnivlk/pushest.svg)](https://ebertapp.io/github/stepnivlk/pushest)
 
-**WIP**
+Please note, this library is **BETA**
 
 ## TODO
 - [x] Event scoping
@@ -10,138 +15,174 @@
 - [x] Unsubscribe method
 - [x] Channels list method
 - [x] Auth token generated only for private/presence channels
-- [ ] Tests
+- [x] Missing tests
 - [x] Handle `pusher:error`
 - [ ] Documentation
-- [ ] :gun.conn supervision
+- [x] :gun.conn monitoring
 - [x] start_link/3 - opts to Pushest
 - [x] Named process option
 - [x] Propagate app version to url
 - [ ] Overall error handling
-- [ ] Start unlinked
 - [x] Publish to hex.pm
-- [ ] Fallback to REST when triggering on a public channel
+- [x] Fallback to REST when triggering on a public channel
+- [ ] Test recovery from :gun_down / EXIT
+- [ ] expose `auth` function to generate a token for client-side libraries.
 
 ## Usage
-```elixir
+### A simple implementation in an OTP application would be:
+```
+# Add necessary pusher configuration to your application config:
+# simple_client/config/config.exs
+config :simple_client, SimpleClient,
+  pusher_app_id: System.get_env("PUSHER_APP_ID"),
+  pusher_key: System.get_env("PUSHER_APP_KEY"),
+  pusher_secret: System.get_env("PUSHER_SECRET"),
+  pusher_cluster: System.get_env("PUSHER_CLUSTER"),
+  pusher_encrypted: true
+
+# simple_client/simple_client.ex
 defmodule SimpleClient do
-  use Pushest
+  use Pushest, otp_app: :simple_client
 
-  def start_link(app_key, app_options, options \\ []) do
-    Pushest.start_link(app_key, app_options, __MODULE__, options)
-  end
-  
-  # User-defined event handling callbacks.
-  def handle_event({:ok, "public-channel", "first-event"}, frame) do
-    # Process frame here
+  # handle_event/2 is user-defined callback which is triggered whenever an event
+  # occurs on the channel.
+  def handle_event({:ok, "public-channel", "some-event"}, frame) do
+    # do something with public frame
   end
 
-  def handle_event({:ok, "private-channel", "second-event"}, frame) do
-    # Process frame here
-  end
-  
-  # In case when there is an error on event. We can catch error message.
-  def handle_event({:error, msg}, frame) do
-    # Process error here
+  def handle_event({:ok, "private-channel", "some-other-event"}, frame) do
+    # do something with private frame
   end
 end
 
-# Config:
-app_key = System.get_env("PUSHER_APP_KEY")
-secret = System.get_env("PUSHER_SECRET")
-cluster = System.get_env("PUSHER_CLUSTER")
+# Now you can start your application with Pushest as a part of your supervision tree:
+# simple_client/lib/simple_client/application.ex
+def start(_type, _args) do
+  children = [
+    {SimpleClient, []}
+  ]
 
-options = %{cluster: cluster, encrypted: true, secret: secret}
-
-# Initialization:
-{:ok, pid} = SimpleClient.start_link(app_key, options)
-
-# Subscription to public channel:
-SimpleClient.subscribe(pid, "public-channel")
-
-# Subscription to private channel:
-# Please note, secret has to be provided and client events needs to be enabled
-# in Pusher app settings.
-SimpleClient.subscribe(pid, "private-channel")
-
-# Subscription to presence channel:
-# `:user_id` is mandatory and has to be unique over the userset in given channel.
-SimpleClient.subscribe(pid, "presence-channel", %{user_id: "1", user_info: %{name: "Tomas Koutsky"}})
-
-# Get list of users subscribed to a presence-channel:
-SimpleClient.presence(pid)
-# => %Pushest.Data.Presence{
-#      count: 1,
-#      hash: %{"1" => %{"name" => "Tomas Koutsky"}},
-#      ids: ["1"],
-#      me: %{user_id: "1", user_info: %{name: "Tomas Koutsky"}}
-#    }
-
-# Triggers can be performed only on private channels:
-SimpleClient.trigger(pid, "private-channel", "first-event", %{name: "Tomas Koutsky"})
-
-# List of subscribed channels:
-SimpleClient.channels(pid)
-# => ["presence-channel", "private-channel", "public-channel"]
-
-# Unsubscribe from a channel:
-SimpleClient.unsubscribe(pid, "public-channel")
+  opts = [strategy: :one_for_one, name: Sup.Supervisor]
+  Supervisor.start_link(children, opts)
+end
 ```
 
-## Usage with registered name
+### You can also provide Pusher options directly via start_link/1 (without using OTP app configuration):
+```
+config = %{
+  app_id:  System.get_env("PUSHER_APP_ID"),
+  key: System.get_env("PUSHER_APP_KEY"),
+  secret: System.get_env("PUSHER_SECRET"),
+  cluster: System.get_env("PUSHER_CLUSTER"),
+  encrypted: true
+}
+
+{:ok, pid} = SimpleClient.start_link(config)
+```
+
+### Now you can use various functions injected in your module
 ```elixir
-defmodule NamedClient do
-  use Pushest
+SimpleClient.subscribe("public-channel")
+:ok
+# ...
+SimpleClient.subscribe("private-channel")
+:ok
+# ...
+SimpleClient.subscribe("presence-channel", %{user_id: "1", user_info: %{name: "Tomas"}})
+:ok
+# ...
+SimpleClient.presence()
+%Pushest.Data.Presence{
+  count: 2,
+  hash: %{"1" => %{"name" => "Tomas"}, "2" => %{"name" => "Jose"}},
+  ids: ["1", "2"],
+  me: %{user_id: "1", user_info: %{name: "Tomas"}}
+}
+# ...
+SimpleClient.trigger("private-channel", "first-event", %{message: "Ahoj"})
+:ok
+# ...
+SimpleClient.channels()
+["presence-channel", "private-channel", "public-channel"]
+# ...
+SimpleClient.unsubscribe("public-channel")
+:ok
+```
 
-  def start_link(app_key, app_options) do
-    Pushest.start_link(app_key, app_options, __MODULE__, name: __MODULE__)
-  end
-  
-  def handle_event({:ok, "public-channel", "first-event"}, frame) do
-    # Process frame here
-  end
+### Functions list
+#### subscribe/1
+Subscribes to public or private channel
+```elixir
+SimpleClient.subscribe("public-channel")
+:ok
+```
 
-  def handle_event({:ok, "private-channel", "second-event"}, frame) do
-    # Process frame here
-  end
-  
-  def handle_event({:error, msg}, frame) do
-    # Process error here
-  end
-end
+#### subscribe/2
+Subscribes to private or presence channel with user data as second parameter.
+User data has to contain `user_id` key with unique identifier for current user.
+Can optionally contain `user_info` field with map of additional informations about user.
+```elixir
+user_data = %{user_id: 123, user_info: %{name: "Tomas", email: "secret@secret.com"}}
+SimpleClient.subscribe("presence-channel", user_data)
+:ok
+# ...
+SimpleClient.subscribe("private-channel", user_data)
+:ok
+```
 
-# Config:
-app_key = System.get_env("PUSHER_APP_KEY")
-secret = System.get_env("PUSHER_SECRET")
-cluster = System.get_env("PUSHER_CLUSTER")
+#### trigger/3
+Triggers on given channel and event with given data payload. Pushest sends data by
+default to REST API endpoint of Pusher, however when subscribed to private or presence channel
+it sends data to Pusher via WebSockets.
+```elixir
+SimpleClient.trigger("public-channel", "event", %{message: "message"})
+:ok
+# ..
+SimpleClient.trigger("private-channel", "event", %{message: "message"})
+:ok
+```
 
-options = %{cluster: cluster, encrypted: true, secret: secret}
+#### trigger/4
+Same as `trigger/3` but lets you force trigger over the REST API (so it never triggers via WebSockets).
+```elixir
+SimpleClient.trigger("private-channel", "event", %{message: "message"}, force_api: true)
+```
 
-# Initialization:
-NamedClient.start_link(app_key, options)
+#### channels/0
+Returns map of all the active channels which are being used in your Pusher application.
+Can contain informations about subscribed users.
+```elixir
+SimpleClient.channels()
+%{"channels" => %{"public-channel" => %{}, "private-channel" => %{}}}
+```
 
-NamedClient.subscribe("public-channel")
-NamedClient.subscribe("private-channel")
+#### subscribed_channels/0
+Returns list of all the subscribed channels for current instance.
+```elixir
+SimpleClient.channels()
+["private-channel"]
+```
 
-NamedClient.subscribe(pid, "presence-channel", %{user_id: "2", user_info: %{name: "Jose Valim"}})
-NamedClient.presence()
-# => %Pushest.Data.Presence{
-#      count: 2,
-#      hash: %{"1" => %{"name" => "Tomas Koutsky"}, "2" => %{"name" => "Jose Valim"}},
-#      ids: ["1", "2"],
-#      me: %{user_id: "2", user_info: %{name: "Jose Valim"}}
-#    }
+#### presence/0
+Returns information about all the users subscribed to a presence channel.
+```elixir
+SimpleClient.presence()
+%Pushest.Data.Presence{
+  count: 2,
+  hash: %{"1" => %{"name" => "Tomas"}, "2" => %{"name" => "Jose"}},
+  ids: ["1", "2"],
+  me: %{user_id: "2", user_info: %{name: "Jose"}}
+}
+```
 
-NamedClient.trigger("private-channel", "first-event", %{name: "Tomas Koutsky"})
-
-NamedClient.channels()
-# => ["presence-channel", "private-channel", "public-channel"]
-
-NamedClient.unsubscribe("public-channel")
+#### unsubscribe/1
+Unsubscribes from given channel
+```elixir
+SimpleClient.unsubscribe("public-channel")
 ```
 
 #### `frame` example
-`frame` is a `Pushest.Data.Frame` struct with data payload as a map. 
+`frame` is a `Pushest.Socket.Data.Frame` or `Pushest.Api.Data.Frame` struct with data payload as a map. 
 ```elixir
 %Pushest.Data.Frame{
   channel: "private-channel",
@@ -152,17 +193,16 @@ NamedClient.unsubscribe("public-channel")
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `pushest` to your list of dependencies in `mix.exs`:
+The package can be installed by adding `pushest` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
   [
-    {:pushest, "~> 0.1.0"}
+    {:pushest, "~> 0.2.0"}
   ]
 end
 ```
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/pushest](https://hexdocs.pm/pushest).
+## Documentation
+
+Documentation can be be found at [https://hexdocs.pm/pushest](https://hexdocs.pm/pushest).
