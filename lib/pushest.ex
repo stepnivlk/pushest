@@ -1,6 +1,6 @@
 defmodule Pushest do
   @moduledoc ~S"""
-  Pushest is a Pusher client library leveraging server and client-side features together.
+  Pushest is a Pusher library leveraging Elixir/OTP to combine server and client-side Pusher features.
   Abstracts un/subscription, client-side triggers, private/presence channel authorizations.
   Keeps track of subscribed channels and users presence when subscribed to presence channel.
   Pushest is meant to be used in your module where you can define callbacks for
