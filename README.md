@@ -17,7 +17,7 @@ Please note, this library is **BETA**
 - [x] Auth token generated only for private/presence channels
 - [x] Missing tests
 - [x] Handle `pusher:error`
-- [ ] Documentation
+- [x] Generate documentation
 - [x] :gun.conn monitoring
 - [x] start_link/3 - opts to Pushest
 - [x] Named process option
@@ -27,6 +27,7 @@ Please note, this library is **BETA**
 - [x] Fallback to REST when triggering on a public channel
 - [ ] Test recovery from :gun_down / EXIT
 - [ ] expose `auth` function to generate a token for client-side libraries.
+- [ ] trigger batching
 
 ## Usage
 ### A simple implementation in an OTP application would be:
