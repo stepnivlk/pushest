@@ -28,6 +28,7 @@ Please note, this library is **BETA**
 - [ ] Test recovery from :gun_down / EXIT
 - [ ] expose `auth` function to generate a token for client-side libraries.
 - [ ] trigger batching
+- [ ] Push notifications
 
 ## Usage
 ### A simple implementation in an OTP application would be:
