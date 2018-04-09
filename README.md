@@ -29,6 +29,7 @@ Please note, this library is **BETA**
 - [ ] expose `auth` function to generate a token for client-side libraries.
 - [ ] trigger batching
 - [ ] Push notifications
+- [ ] Subscribe to a list of channels after startup
 
 ## Usage
 ### A simple implementation in an OTP application would be:
