@@ -105,13 +105,21 @@ defmodule Pushest.Socket do
   """
   def handle_info(
         {:gun_ws, _conn_pid, {:text, raw_frame}},
-        state = %State{channels: channels, presence: presence, callback_module: callback_module}
+        state = %State{
+          channels: channels,
+          presence: presence,
+          callback_module: callback_module,
+          init_channels: init_channels
+        }
       ) do
     frame = Frame.decode!(raw_frame)
 
     case frame.event do
       "pusher:connection_established" ->
         Logger.debug("Socket | pusher:connection_established")
+
+        do_init_channels(init_channels)
+
         {:noreply, %{state | socket_info: SocketInfo.decode(frame.data)}}
 
       "pusher_internal:subscription_succeeded" ->
@@ -166,12 +174,21 @@ defmodule Pushest.Socket do
     @client.ws_send(conn_pid, {:text, Frame.encode!(frame)})
   end
 
-  @spec init_state({map, module}) :: %State{}
-  defp init_state({pusher_opts, callback_module}) do
+  @spec init_state({map, module, list}) :: %State{}
+  defp init_state({pusher_opts, callback_module, init_channels}) do
     %State{
       options: %Options{} |> Map.merge(pusher_opts),
       url: Utils.url(pusher_opts),
-      callback_module: callback_module
+      callback_module: callback_module,
+      init_channels: init_channels
     }
   end
+
+  defp do_init_channels([[name: channel, user_data: user_data] | other_channels]) do
+    GenServer.cast(__MODULE__, {:subscribe, channel, user_data})
+    Logger.debug("do_init_channels: #{channel}")
+    do_init_channels(other_channels)
+  end
+
+  defp do_init_channels([]), do: nil
 end

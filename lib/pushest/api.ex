@@ -15,7 +15,7 @@ defmodule Pushest.Api do
   @client Pushest.Client.for_env()
   @version Mix.Project.config()[:version]
 
-  def start_link({pusher_opts, _callback_module}) do
+  def start_link({pusher_opts, _callback_module, _init_channels}) do
     GenServer.start_link(
       __MODULE__,
       %State{url: Utils.url(pusher_opts), options: %Options{} |> Map.merge(pusher_opts)},

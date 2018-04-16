@@ -7,9 +7,13 @@ defmodule Pushest.Supervisor do
   alias Pushest.{Api, Socket}
   use Supervisor
 
-  @spec start_link(map, module) :: {:ok, pid} | {:error, term}
-  def start_link(pusher_opts, callback_module) do
-    Supervisor.start_link(__MODULE__, {pusher_opts, callback_module}, name: __MODULE__)
+  @spec start_link(map, module, list) :: {:ok, pid} | {:error, term}
+  def start_link(pusher_opts, callback_module, init_channels) do
+    Supervisor.start_link(
+      __MODULE__,
+      {pusher_opts, callback_module, init_channels},
+      name: __MODULE__
+    )
   end
 
   def init(opts) do

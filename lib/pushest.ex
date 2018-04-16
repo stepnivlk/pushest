@@ -114,11 +114,11 @@ defmodule Pushest do
       """
       @spec start_link(pusher_opts) :: {:ok, pid} | {:error, term}
       def start_link(pusher_opts) when is_map(pusher_opts) do
-        Pushest.Supervisor.start_link(pusher_opts, __MODULE__)
+        Pushest.Supervisor.start_link(pusher_opts, __MODULE__, init_channels())
       end
 
       def start_link(_) do
-        Pushest.Supervisor.start_link(@config, __MODULE__)
+        Pushest.Supervisor.start_link(@config, __MODULE__, init_channels())
       end
 
       def child_spec(opts) do
@@ -127,6 +127,10 @@ defmodule Pushest do
           start: {__MODULE__, :start_link, [opts]},
           type: :supervisor
         }
+      end
+
+      def init_channels do
+        []
       end
 
       @doc ~S"""
@@ -221,7 +225,7 @@ defmodule Pushest do
         )
       end
 
-      defoverridable handle_event: 2
+      defoverridable handle_event: 2, init_channels: 0
     end
   end
 end
