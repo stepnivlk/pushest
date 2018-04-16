@@ -2,13 +2,13 @@ defmodule Pushest do
   @moduledoc ~S"""
   Pushest is a Pusher library leveraging Elixir/OTP to combine server and client-side Pusher features.
   Abstracts un/subscription, client-side triggers, private/presence channel authorizations.
-  Keeps track of subscribed channels and users presence when subscribed to presence channel.
-  Pushest is meant to be used in your module where you can define callbacks for
+  Keeps track of subscribed channels and users presence when subscribed to a presence channel.
+  Pushest is meant to be `use`d in your module where you can define callbacks for
   events you're interested in.
 
   A simple implementation in an OTP application would be:
   ```
-  # Add necessary pusher configuration to your application config:
+  # Add necessary pusher configuration to your application config (assuming an OTP app):
   # simple_client/config/config.exs
   config :simple_client, SimpleClient,
     pusher_app_id: System.get_env("PUSHER_APP_ID"),
@@ -19,18 +19,33 @@ defmodule Pushest do
 
   # simple_client/simple_client.ex
   defmodule SimpleClient do
+    # :otp_app option is needed for Pushest to get a config.
     use Pushest, otp_app: :simple_client
 
+    # Subscribe to these channels right after application startup.
+    def init_channels do
+      [
+        [name: "public-init-channel", user_data: %{}],
+        [name: "private-init-channel", user_data: %{}],
+        [name: "presence-init-channel", user_data: %{user_id: 123}],
+      ]
+    end
+
+    # handle incoming events.
+    def handle_event({:ok, "public-init-channel", "some-event"}, frame) do
+      # do something with public-init-channel frame
+    end
+
     def handle_event({:ok, "public-channel", "some-event"}, frame) do
-      # do something with public frame
+      # do something with public-channel frame
     end
 
     def handle_event({:ok, "private-channel", "some-other-event"}, frame) do
-      # do something with private frame
+      # do something with private-channel frame
     end
   end
 
-  # Now you can start your application with Pushest as a part of your supervision tree:
+  # Now you can start your application as a part of your supervision tree:
   # simple_client/lib/simple_client/application.ex
   def start(_type, _args) do
     children = [
@@ -55,16 +70,22 @@ defmodule Pushest do
   {:ok, pid} = SimpleClient.start_link(config)
   ```
 
-  Now you can interact with Pusher:
+  Now you can interact with Pusher using methods injected in your module:
   ```
   SimpleClient.trigger("private-channel", "event", %{message: "via api"}) 
   SimpleClient.channels()
-  # => %{"channels" => %{"public-channel" => %{}}}
+  # => %{
+  "channels" => %{
+    "presence-init-channel" => %{},
+    "private-init-channel" => %{},
+    "public-init-channel" => %{}
+  }
   SimpleClient.subscribe("private-channel")
   SimpleClient.trigger("private-channel", "event", %{message: "via ws"}) 
   SimpleClient.trigger("private-channel", "event", %{message: "via api"}, force_api: true) 
   # ...
   ```
+  For full list of injected methods please check the README.
   """
 
   alias Pushest.Router
@@ -112,13 +133,12 @@ defmodule Pushest do
 
       For available pusher_opts values see `t:pusher_opts/0`.
       """
-      @spec start_link(pusher_opts) :: {:ok, pid} | {:error, term}
       def start_link(pusher_opts) when is_map(pusher_opts) do
-        Pushest.Supervisor.start_link(pusher_opts, __MODULE__)
+        Pushest.Supervisor.start_link(pusher_opts, __MODULE__, init_channels())
       end
 
       def start_link(_) do
-        Pushest.Supervisor.start_link(@config, __MODULE__)
+        Pushest.Supervisor.start_link(@config, __MODULE__, init_channels())
       end
 
       def child_spec(opts) do
@@ -136,7 +156,6 @@ defmodule Pushest do
       informations about user.
       E.g.: %{user_id: "1", user_info: %{name: "Tomas Koutsky"}}
       """
-      @spec subscribe(String.t(), map) :: term
       def subscribe(channel, user_data) do
         Router.cast({:subscribe, channel, user_data})
       end
@@ -144,7 +163,6 @@ defmodule Pushest do
       @doc ~S"""
       Subscribe to a channel without any user data, like any public channel.
       """
-      @spec subscribe(String.t()) :: term
       def subscribe(channel) do
         Router.cast({:subscribe, channel, %{}})
       end
@@ -153,7 +171,6 @@ defmodule Pushest do
       Trigger on given channel/event combination - sends given data to Pusher.
       data has to be a map.
       """
-      @spec trigger(String.t(), String.t(), map) :: term
       def trigger(channel, event, data) do
         Router.cast({:trigger, channel, event, data})
       end
@@ -165,7 +182,6 @@ defmodule Pushest do
 
       For trigger_opts values see `t:trigger_opts/0`.
       """
-      @spec trigger(String.t(), String.t(), map, trigger_opts) :: term
       def trigger(channel, event, data, opts) do
         Router.cast({:trigger, channel, event, data}, opts)
       end
@@ -205,11 +221,35 @@ defmodule Pushest do
       defmodule MyMod do
         use Pushest, otp_app: :my_mod
 
+        def init_channels do
+          [
+            [name: "public-init-channel", user_data: %{}],
+            [name: "private-init-channel", user_data: %{}],
+            [name: "presence-init-channel", user_data: %{user_id: 123}],
+          ]
+        end
+      end
+      ```
+      Subscribes to given list of channels right after application startup.
+      Each element has to be a keyword list in exact format of:
+      [name: String.t(), user_data: map]
+      """
+      def init_channels do
+        []
+      end
+
+      @doc ~S"""
+      Function meant to be overwritten in user module, e.g.:
+      ```
+      defmodule MyMod do
+        use Pushest, otp_app: :my_mod
+
         handle_event({:ok, "my-channel, "my-event"}, frame) do
           # Do something with a frame here.
         end
       end
       ```
+      Catches events sent to a channels the client is subscribed to.
       """
       def handle_event({status, channel, event}, frame) do
         require Logger
@@ -221,7 +261,7 @@ defmodule Pushest do
         )
       end
 
-      defoverridable handle_event: 2
+      defoverridable handle_event: 2, init_channels: 0
     end
   end
 end

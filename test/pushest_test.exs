@@ -12,6 +12,14 @@ defmodule PushestTest do
     @moduledoc false
 
     use Pushest, otp_app: :pushest
+
+    def init_channels do
+      [
+        [name: "public-init-channel", user_data: %{}],
+        [name: "private-init-channel", user_data: %{}],
+        [name: "presence-init-channel", user_data: %{user_id: 123}],
+      ]
+    end
   end
 
   def child_pid(mod_name) do
@@ -60,6 +68,14 @@ defmodule PushestTest do
 
   setup_all do
     start()
+  end
+
+  describe "subscription to init_channels" do
+    test "it subscribes to list of init_channels after startup" do
+      assert Enum.member?(TestPushest.subscribed_channels(), "public-init-channel")
+      assert Enum.member?(TestPushest.subscribed_channels(), "private-init-channel")
+      assert Enum.member?(TestPushest.subscribed_channels(), "presence-init-channel")
+    end
   end
 
   describe "subscribe" do
