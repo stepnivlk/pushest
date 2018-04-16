@@ -31,6 +31,7 @@ Please note, this library is **BETA**
 - [ ] Push notifications
 - [ ] Subscribe to a list of channels after startup
 - [ ] Full recovery after network outage, exit, etc. Buffer needed.
+- [ ] Refactor :gun.conn PID handling.
 
 ## Usage
 ### A simple implementation in an OTP application would be:
@@ -111,7 +112,7 @@ SimpleClient.presence()
 SimpleClient.trigger("private-channel", "first-event", %{message: "Ahoj"})
 :ok
 # ...
-SimpleClient.channels()
+SimpleClient.subscribed_channels()
 ["presence-channel", "private-channel", "public-channel"]
 # ...
 SimpleClient.unsubscribe("public-channel")
