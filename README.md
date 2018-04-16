@@ -30,6 +30,7 @@ Please note, this library is **BETA**
 - [ ] trigger batching
 - [ ] Push notifications
 - [ ] Subscribe to a list of channels after startup
+- [ ] Full recovery after network outage, exit, etc. Buffer needed.
 
 ## Usage
 ### A simple implementation in an OTP application would be:
