@@ -167,7 +167,7 @@ SimpleClient.channels()
 #### subscribed_channels/0
 Returns list of all the subscribed channels for current instance.
 ```elixir
-SimpleClient.channels()
+SimpleClient.subscribed_channels()
 ["private-channel"]
 ```
 
