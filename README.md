@@ -29,7 +29,7 @@ Please note, this library is **BETA**
 - [ ] expose `auth` function to generate a token for client-side libraries.
 - [ ] trigger batching
 - [ ] Push notifications
-- [ ] Subscribe to a list of channels after startup
+- [x] Subscribe to a list of channels after startup
 - [ ] Full recovery after network outage, exit, etc. Buffer needed.
 - [ ] Refactor :gun.conn PID handling.
 
