@@ -184,9 +184,9 @@ defmodule Pushest.Socket do
     }
   end
 
+  @spec do_init_channels(list) :: term
   defp do_init_channels([[name: channel, user_data: user_data] | other_channels]) do
     GenServer.cast(__MODULE__, {:subscribe, channel, user_data})
-    Logger.debug("do_init_channels: #{channel}")
     do_init_channels(other_channels)
   end
 

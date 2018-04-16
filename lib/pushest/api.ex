@@ -78,7 +78,7 @@ defmodule Pushest.Api do
   end
 
   def handle_info(
-        {:gun_response, conn_pid, stream_ref, :nofin, status, _headers},
+        {:gun_response, conn_pid, stream_ref, :fin, status, _headers},
         state = %State{conn_pid: conn_pid}
       ) do
     case status do

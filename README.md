@@ -45,6 +45,15 @@ config :simple_client, SimpleClient,
 defmodule SimpleClient do
   use Pushest, otp_app: :simple_client
 
+  # Subscribe to these channels right after application startup.
+  def init_channels do
+    [
+      [name: "public-init-channel", user_data: %{}],
+      [name: "private-init-channel", user_data: %{}],
+      [name: "presence-init-channel", user_data: %{user_id: 123}],
+    ]
+  end
+
   # handle_event/2 is user-defined callback which is triggered whenever an event
   # occurs on the channel.
   def handle_event({:ok, "public-channel", "some-event"}, frame) do
