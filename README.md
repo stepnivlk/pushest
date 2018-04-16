@@ -56,12 +56,16 @@ defmodule SimpleClient do
 
   # handle_event/2 is user-defined callback which is triggered whenever an event
   # occurs on the channel.
+  def handle_event({:ok, "public-init-channel", "some-event"}, frame) do
+    # do something with public-init-channel frame
+  end
+
   def handle_event({:ok, "public-channel", "some-event"}, frame) do
-    # do something with public frame
+    # do something with public-channel frame
   end
 
   def handle_event({:ok, "private-channel", "some-other-event"}, frame) do
-    # do something with private frame
+    # do something with private-channel frame
   end
   
   # We can also catch errors.
@@ -97,6 +101,14 @@ config = %{
 
 ### Now you can use various functions injected in your module
 ```elixir
+SimpleClient.channels()
+# => %{
+"channels" => %{
+  "presence-init-channel" => %{},
+  "private-init-channel" => %{},
+  "public-init-channel" => %{}
+}
+# ...
 SimpleClient.subscribe("public-channel")
 :ok
 # ...
@@ -117,8 +129,9 @@ SimpleClient.presence()
 SimpleClient.trigger("private-channel", "first-event", %{message: "Ahoj"})
 :ok
 # ...
-SimpleClient.channels()
-["presence-channel", "private-channel", "public-channel"]
+SimpleClient.subscribed_channels()
+["presence-channel", "private-channel", "public-channel",
+ "presence-init-channel", "private-init-channel", "public-init-channel"]
 # ...
 SimpleClient.unsubscribe("public-channel")
 :ok
@@ -174,7 +187,7 @@ SimpleClient.channels()
 #### subscribed_channels/0
 Returns list of all the subscribed channels for current instance.
 ```elixir
-SimpleClient.channels()
+SimpleClient.subscribed_channels()
 ["private-channel"]
 ```
 
@@ -194,6 +207,37 @@ SimpleClient.presence()
 Unsubscribes from given channel
 ```elixir
 SimpleClient.unsubscribe("public-channel")
+```
+
+### Overridable functions
+These functions are meant to be overridden in a module using Pushest
+#### handle_event/2
+Callback being triggered when there is a WebSocket event on a subscribed channel.
+```elixir
+defmodule MyApp.MyModule
+  use Pushest, otp_app: :my_app
+
+  def handle_event({:ok, "my-channel", "my-event"}, frame) do
+    IO.inspect frame
+  end
+end
+```
+
+#### init_channels/0
+Subscribes to given list of channels right after application startup.
+Each element has to be a keyword list in exact format of: `[name: String.t(), user_data: map]`
+```elixir
+defmodule MyApp.MyModule
+  use Pushest, otp_app: :my_app
+
+  def init_channels do
+    [
+      [name: "public-init-channel", user_data: %{}],
+      [name: "private-init-channel", user_data: %{}],
+      [name: "presence-init-channel", user_data: %{user_id: 123}],
+    ]
+  end
+end
 ```
 
 #### `frame` example
