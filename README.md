@@ -2,7 +2,7 @@
 
 Pushest is bidirectional Pusher client leveraging Elixir/OTP to combine server and client-side
 Pusher features together in one library. Pushest communicates both via WebSockets and REST API.
-You can trigger on any channel but also subscribe to channels, handle events using callbacks or
+You can trigger on any channel, subscribe to channels, handle events using callbacks or
 keep track of presence.
 
 [![Build Status](https://travis-ci.org/stepnivlk/pushest.svg?branch=master)](https://travis-ci.org/stepnivlk/pushest) [![Ebert](https://ebertapp.io/github/stepnivlk/pushest.svg)](https://ebertapp.io/github/stepnivlk/pushest)
@@ -28,6 +28,10 @@ Please note, this library is **BETA**
 - [ ] Test recovery from :gun_down / EXIT
 - [ ] expose `auth` function to generate a token for client-side libraries.
 - [ ] trigger batching
+- [ ] Push notifications
+- [ ] Subscribe to a list of channels after startup
+- [ ] Full recovery after network outage, exit, etc. Buffer needed.
+- [ ] Refactor :gun.conn PID handling.
 
 ## Usage
 ### A simple implementation in an OTP application would be:
@@ -87,7 +91,7 @@ end
 ```
 
 ### You can also provide Pusher options directly via start_link/1 (without using OTP app configuration):
-```
+```elixir
 config = %{
   app_id:  System.get_env("PUSHER_APP_ID"),
   key: System.get_env("PUSHER_APP_KEY"),
