@@ -14,6 +14,10 @@ defmodule Pushest.Socket do
 
   @client Pushest.Client.for_env()
 
+  ## ==========================================================================
+  ## Client
+  ## ==========================================================================
+
   def start_link(opts) do
     GenServer.start_link(
       __MODULE__,
@@ -21,6 +25,10 @@ defmodule Pushest.Socket do
       name: __MODULE__
     )
   end
+
+  ## ==========================================================================
+  ## Server
+  ## ==========================================================================
 
   def init(state = %State{url: %Url{domain: domain, path: path, port: port}}) do
     {:ok, conn_pid} = @client.open(domain, port)
@@ -165,6 +173,10 @@ defmodule Pushest.Socket do
     Logger.debug(fn -> "Socket | #{inspect(params)}" end)
     {:noreply, state}
   end
+
+  ## ==========================================================================
+  ## Private
+  ## ==========================================================================
 
   @spec do_subscribe(String.t(), map, %State{}) :: term
   defp do_subscribe(channel, user_data, state = %State{conn_pid: conn_pid}) do

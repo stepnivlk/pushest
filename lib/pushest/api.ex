@@ -15,6 +15,10 @@ defmodule Pushest.Api do
   @client Pushest.Client.for_env()
   @version Mix.Project.config()[:version]
 
+  ## ==========================================================================
+  ## Client
+  ## ==========================================================================
+
   def start_link({pusher_opts, _callback_module, _init_channels}) do
     GenServer.start_link(
       __MODULE__,
@@ -22,6 +26,10 @@ defmodule Pushest.Api do
       name: __MODULE__
     )
   end
+
+  ## ==========================================================================
+  ## Server
+  ## ==========================================================================
 
   def init(state = %State{url: %Url{domain: domain, port: port}}) do
     {:ok, conn_pid} = @client.open(domain, port)
@@ -78,11 +86,12 @@ defmodule Pushest.Api do
   end
 
   def handle_info(
-        {:gun_response, conn_pid, stream_ref, :fin, status, _headers},
+        {:gun_response, conn_pid, stream_ref, :nofin, status, _headers},
         state = %State{conn_pid: conn_pid}
       ) do
     case status do
-      200 -> {:ok, _body} = :gun.await_body(conn_pid, stream_ref)
+      200 ->
+        {:ok, _body} = :gun.await_body(conn_pid, stream_ref)
       _ -> Logger.error("Api | Pusher response status #{inspect(status)}")
     end
 
@@ -107,6 +116,10 @@ defmodule Pushest.Api do
     {:noreply, state}
   end
 
+  ## ==========================================================================
+  ## Private
+  ## ==========================================================================
+
   defp get_headers do
     [
       {"X-Pusher-Library", "Pushest #{@version}"}
@@ -114,10 +127,7 @@ defmodule Pushest.Api do
   end
 
   defp post_headers do
-    [
-      {"content-type", "application/json"},
-      {"X-Pusher-Library", "Pushest #{@version}"}
-    ]
+    [{"content-type", "application/json"} | get_headers()]
   end
 
   defp client_sync(conn_pid, stream_ref) do

@@ -97,30 +97,6 @@ defmodule Pushest do
 
   defmacro __using__(opts) do
     quote bind_quoted: [opts: opts] do
-      @typedoc ~S"""
-      Options for Pushest to properly communicate with Pusher server.
-
-      - `:app_id` - Pusher Application ID.
-      - `:key` - Pusher Application key.
-      - `:secret` - Necessary to subscribe to private/presence channels and trigger events.
-      - `:cluster` - Cluster where your Pusher app is configured.
-      - `:encrypted` - When set to true communication with Pusher is fully encrypted.
-      """
-      @type pusher_opts :: %{
-              app_id: String.t(),
-              secret: String.t(),
-              key: String.t(),
-              cluster: String.t(),
-              encrypted: boolean
-            }
-
-      @typedoc ~S"""
-      Optional options for trigger function.
-
-      - `:force_api` - Always triggers via Pusher REST API endpoint when set to `true`
-      """
-      @type trigger_opts :: [force_api: boolean]
-
       @behaviour Pushest
 
       @config Pushest.Supervisor.config(__MODULE__, opts)
@@ -179,8 +155,6 @@ defmodule Pushest do
       Same as trigger/3 but adds a possiblity to enforce triggering via API endpoint.
       For enforced API trigger provide `force_api: true` as an `opts`.
       E.g.: `Mod.trigger("channel", "event", %{message: "m"}, force_api: true)`
-
-      For trigger_opts values see `t:trigger_opts/0`.
       """
       def trigger(channel, event, data, opts) do
         Router.cast({:trigger, channel, event, data}, opts)
@@ -213,6 +187,14 @@ defmodule Pushest do
       """
       def unsubscribe(channel) do
         Router.cast({:unsubscribe, channel})
+      end
+
+      def authenticate(_channel, _socket_id) do
+        {:error, "TBD"}
+      end
+
+      def authenticate(_channel, _socket_id, _user_data) do
+        {:error, "TBD"}
       end
 
       @doc ~S"""
