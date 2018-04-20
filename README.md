@@ -261,7 +261,7 @@ The package can be installed by adding `pushest` to your list of dependencies in
 ```elixir
 def deps do
   [
-    {:pushest, "~> 0.2.1"}
+    {:pushest, "~> 0.2.2"}
   ]
 end
 ```
