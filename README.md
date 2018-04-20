@@ -7,8 +7,6 @@ keep track of presence.
 
 [![Build Status](https://travis-ci.org/stepnivlk/pushest.svg?branch=master)](https://travis-ci.org/stepnivlk/pushest) [![Ebert](https://ebertapp.io/github/stepnivlk/pushest.svg)](https://ebertapp.io/github/stepnivlk/pushest)
 
-Please note, this library is **BETA**
-
 ## TODO
 - [x] Event scoping
 - [x] Presence
