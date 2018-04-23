@@ -30,6 +30,7 @@ keep track of presence.
 - [x] Subscribe to a list of channels after startup
 - [ ] Full recovery after network outage, exit, etc. Buffer needed.
 - [ ] Refactor :gun.conn PID handling.
+- [ ] Add a support for testing of modules using Pushest
 
 ## Usage
 ### A simple implementation in an OTP application would be:
