@@ -5,6 +5,12 @@ defmodule Pushest.Api.Data.Frame do
   This module handles encode/decode actions for a Frame.
   """
 
+  @type t :: %__MODULE__{
+          channel: String.t(),
+          name: String.t(),
+          data: map
+        }
+
   defstruct [:channel, :name, :data]
 
   @doc ~S"""

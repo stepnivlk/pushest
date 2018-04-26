@@ -6,5 +6,11 @@ defmodule Pushest.Api.Data.State do
   alias Pushest.Api.Data.Url
   alias Pushest.Data.Options
 
+  @type t :: %__MODULE__{
+          url: %Url{},
+          options: %Options{},
+          conn_pid: nil | pid
+        }
+
   defstruct url: %Url{}, options: %Options{}, conn_pid: nil
 end

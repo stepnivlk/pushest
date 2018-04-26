@@ -3,6 +3,13 @@ defmodule Pushest.Socket.Data.Presence do
   Structure representing presence information, connected user IDs and data of them.
   """
 
+  @type t :: %__MODULE__{
+    count: integer,
+    hash: map,
+    ids: list(integer),
+    me: map
+  }
+
   defstruct count: 0, hash: %{}, ids: [], me: %{}
 
   @doc ~S"""

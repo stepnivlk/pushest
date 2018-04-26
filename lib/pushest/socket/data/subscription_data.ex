@@ -4,5 +4,11 @@ defmodule Pushest.Socket.Data.SubscriptionData do
   subscription event.
   """
 
+  @type t :: %__MODULE__{
+    channel: String.t(),
+    auth: String.t(),
+    channel_data: map
+  }
+
   defstruct [:channel, :auth, :channel_data]
 end

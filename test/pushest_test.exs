@@ -17,7 +17,7 @@ defmodule PushestTest do
       [
         [name: "public-init-channel", user_data: %{}],
         [name: "private-init-channel", user_data: %{}],
-        [name: "presence-init-channel", user_data: %{user_id: 123}],
+        [name: "presence-init-channel", user_data: %{user_id: 123}]
       ]
     end
   end

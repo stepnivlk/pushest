@@ -7,6 +7,12 @@ defmodule Pushest.Socket.Data.Frame do
 
   alias Pushest.Socket.Data.SubscriptionData
 
+  @type t :: %__MODULE__{
+    channel: String.t(),
+    event: String.t(),
+    data: map
+  }
+
   defstruct [:channel, :event, :data]
 
   @doc ~S"""

@@ -4,5 +4,13 @@ defmodule Pushest.Data.Options do
   initializating methods.
   """
 
+  @type t :: %__MODULE__{
+          app_id: String.t(),
+          key: String.t(),
+          cluster: String.t(),
+          secret: String.t(),
+          encrypted: boolean
+        }
+
   defstruct [:app_id, :key, :cluster, :encrypted, :secret]
 end

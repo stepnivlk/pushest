@@ -5,6 +5,11 @@ defmodule Pushest.Socket.Data.SocketInfo do
   This module handles decode action for a SocketInfo.
   """
 
+  @type t :: %__MODULE__{
+    socket_id: String.t(),
+    activity_timeout: integer
+  }
+
   defstruct [:socket_id, :activity_timeout]
 
   @doc ~S"""

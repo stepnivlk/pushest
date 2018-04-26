@@ -92,7 +92,9 @@ defmodule Pushest.Api do
     case status do
       200 ->
         {:ok, _body} = :gun.await_body(conn_pid, stream_ref)
-      _ -> Logger.error("Api | Pusher response status #{inspect(status)}")
+
+      _ ->
+        Logger.error("Api | Pusher response status #{inspect(status)}")
     end
 
     {:noreply, state}
