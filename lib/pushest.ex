@@ -99,7 +99,7 @@ defmodule Pushest do
     quote bind_quoted: [opts: opts] do
       @behaviour Pushest
 
-      @config Pushest.Supervisor.config(__MODULE__, opts)
+      @options Pushest.Supervisor.config(__MODULE__, opts)
 
       @doc ~S"""
       Starts a Pushest Supervisor process linked to current process.
@@ -114,7 +114,7 @@ defmodule Pushest do
       end
 
       def start_link(_) do
-        Pushest.Supervisor.start_link(@config, __MODULE__, init_channels())
+        Pushest.Supervisor.start_link(@options, __MODULE__, init_channels())
       end
 
       def child_spec(opts) do
@@ -133,14 +133,14 @@ defmodule Pushest do
       E.g.: %{user_id: "1", user_info: %{name: "Tomas Koutsky"}}
       """
       def subscribe(channel, user_data) do
-        Router.cast({:subscribe, channel, user_data})
+        Router.cast({:subscribe, channel, user_data}, @options)
       end
 
       @doc ~S"""
       Subscribe to a channel without any user data, like any public channel.
       """
       def subscribe(channel) do
-        Router.cast({:subscribe, channel, %{}})
+        Router.cast({:subscribe, channel, %{}}, @options)
       end
 
       @doc ~S"""
@@ -148,7 +148,7 @@ defmodule Pushest do
       data has to be a map.
       """
       def trigger(channel, event, data) do
-        Router.cast({:trigger, channel, event, data})
+        Router.cast({:trigger, channel, event, data}, @options)
       end
 
       @doc ~S"""
@@ -157,21 +157,21 @@ defmodule Pushest do
       E.g.: `Mod.trigger("channel", "event", %{message: "m"}, force_api: true)`
       """
       def trigger(channel, event, data, opts) do
-        Router.cast({:trigger, channel, event, data}, opts)
+        Router.cast({:trigger, channel, event, data}, @options, opts)
       end
 
       @doc ~S"""
       Returns all the channels anyone is using, calls Pusher via REST API.
       """
       def channels do
-        Router.call(:channels)
+        Router.call(:channels, @options)
       end
 
       @doc ~S"""
       Returns only the channels this client is subscribed to.
       """
       def subscribed_channels do
-        Router.call(:subscribed_channels)
+        Router.call(:subscribed_channels, @options)
       end
 
       @doc ~S"""
@@ -179,14 +179,14 @@ defmodule Pushest do
       this client is subscribed to.
       """
       def presence do
-        Router.call(:presence)
+        Router.call(:presence, @options)
       end
 
       @doc ~S"""
       Unsubscribes from a channel
       """
       def unsubscribe(channel) do
-        Router.cast({:unsubscribe, channel})
+        Router.cast({:unsubscribe, channel}, @options)
       end
 
       def authenticate(_channel, _socket_id) do

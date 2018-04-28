@@ -1,4 +1,4 @@
-defmodule Pushest.Api do
+defmodule Pushest.Adapters.Api do
   @moduledoc ~S"""
   GenServer responsible for communication with Pusher via REST API endpoint.
   This module is meant to be used internally as part of the Pushest application.
@@ -8,9 +8,11 @@ defmodule Pushest.Api do
 
   require Logger
 
-  alias __MODULE__.Utils
-  alias __MODULE__.Data.{State, Frame, Url}
+  alias Pushest.Api.Utils
+  alias Pushest.Api.Data.{State, Frame, Url}
   alias Pushest.Data.Options
+
+  @behaviour Pushest.Adapter
 
   @client Pushest.Client.for_env()
   @version Mix.Project.config()[:version]
@@ -25,6 +27,14 @@ defmodule Pushest.Api do
       %State{url: Utils.url(pusher_opts), options: %Options{} |> Map.merge(pusher_opts)},
       name: __MODULE__
     )
+  end
+
+  def call(command) do
+    GenServer.call(__MODULE__, command)
+  end
+
+  def cast(command) do
+    GenServer.cast(__MODULE__, command)
   end
 
   ## ==========================================================================
@@ -143,6 +153,7 @@ defmodule Pushest.Api do
 
       {:error, reason} ->
         Logger.error(":gun_fail #{inspect(reason)}")
+        :error
     end
   end
 end

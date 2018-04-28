@@ -6,9 +6,9 @@ defmodule Pushest.Socket.Data.SocketInfo do
   """
 
   @type t :: %__MODULE__{
-    socket_id: String.t(),
-    activity_timeout: integer
-  }
+          socket_id: String.t(),
+          activity_timeout: integer
+        }
 
   defstruct [:socket_id, :activity_timeout]
 

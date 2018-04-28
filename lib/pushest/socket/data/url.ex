@@ -4,10 +4,10 @@ defmodule Pushest.Socket.Data.Url do
   """
 
   @type t :: %__MODULE__{
-    domain: String.t(),
-    path: String.t(),
-    port: integer
-  }
+          domain: String.t(),
+          path: String.t(),
+          port: integer
+        }
 
   defstruct [:domain, :path, :port]
 end

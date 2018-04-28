@@ -3,7 +3,7 @@ defmodule Pushest.Router do
   Routes calls/cast from a module using Pushest to either Socket or Api GenServers.
   """
 
-  alias Pushest.{Api, Socket}
+  alias Pushest.Data.Options
 
   @type cast_term ::
           {:subscribe, String.t(), map}
@@ -22,51 +22,58 @@ defmodule Pushest.Router do
   @doc ~S"""
   Async cast either `Socket` or `Api` GenServers with given message.
   """
-  @spec cast(cast_term) :: :ok
-  def cast({:subscribe, channel, user_data}) do
-    GenServer.cast(Socket, {:subscribe, channel, user_data})
+  @spec cast(cast_term, %Options{}) :: :ok
+  def cast({:subscribe, channel, user_data}, %Options{socket_adapter: socket_adapter}) do
+    apply(socket_adapter, :cast, [{:subscribe, channel, user_data}])
   end
 
-  def cast({:trigger, channel = "private-" <> _rest, event, data}) do
-    GenServer.cast(client_mod(channel), {:trigger, channel, event, data})
+  def cast({:trigger, channel = "private-" <> _rest, event, data}, options = %Options{}) do
+    apply(adapter_mod(channel, options), :cast, [{:trigger, channel, event, data}])
   end
 
-  def cast({:trigger, channel = "presence-" <> _rest, event, data}) do
-    GenServer.cast(client_mod(channel), {:trigger, channel, event, data})
+  def cast({:trigger, channel = "presence-" <> _rest, event, data}, options = %Options{}) do
+    apply(adapter_mod(channel, options), :cast, [{:trigger, channel, event, data}])
   end
 
-  def cast({:trigger, channel, event, data}) do
-    GenServer.cast(Api, {:trigger, channel, event, data})
+  def cast({:trigger, channel, event, data}, %Options{api_adapter: api_adapter}) do
+    apply(api_adapter, :cast, [{:trigger, channel, event, data}])
   end
 
-  def cast({:unsubscribe, channel}) do
-    GenServer.cast(Socket, {:unsubscribe, channel})
+  def cast({:unsubscribe, channel}, %Options{socket_adapter: socket_adapter}) do
+    apply(socket_adapter, :cast, [{:unsubscribe, channel}])
   end
 
-  @spec cast({:trigger, String.t(), String.t(), map}, cast_opts) :: :ok
-  def cast({:trigger, channel, event, data}, force_api: true) do
-    GenServer.cast(Api, {:trigger, channel, event, data})
+  @spec cast({:trigger, String.t(), String.t(), map}, %Options{}, cast_opts) :: :ok
+  def cast({:trigger, channel, event, data}, %Options{api_adapter: api_adapter}, force_api: true) do
+    apply(api_adapter, :cast, [{:trigger, channel, event, data}])
   end
 
   @doc ~S"""
   Sync call either `Socket` or `Api` GenServers with given message.
   """
-  @spec call(call_term) :: term
-  def call(:presence) do
-    GenServer.call(Socket, :presence)
+  @spec call(call_term, %Options{}) :: term
+  def call(:presence, %Options{socket_adapter: socket_adapter}) do
+    apply(socket_adapter, :call, [:presence])
   end
 
-  def call(:channels) do
-    GenServer.call(Api, :channels)
+  def call(:channels, %Options{api_adapter: api_adapter}) do
+    apply(api_adapter, :call, [:channels])
   end
 
-  def call(:subscribed_channels) do
-    GenServer.call(Socket, :channels)
+  def call(:subscribed_channels, %Options{socket_adapter: socket_adapter}) do
+    apply(socket_adapter, :call, [:channels])
   end
 
-  @spec client_mod(String.t()) :: module
-  defp client_mod(channel) do
-    subscribed = Enum.member?(call(:subscribed_channels), channel)
-    if(subscribed, do: Socket, else: Api)
+  ## ==========================================================================
+  ## Private
+  ## ==========================================================================
+
+  @spec adapter_mod(String.t(), %Options{}) :: module
+  defp adapter_mod(
+         channel,
+         options = %Options{socket_adapter: socket_adapter, api_adapter: api_adapter}
+       ) do
+    subscribed = Enum.member?(call(:subscribed_channels, options), channel)
+    if(subscribed, do: socket_adapter, else: api_adapter)
   end
 end

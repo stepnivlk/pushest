@@ -110,7 +110,7 @@ defmodule Pushest.FakeClient do
         }
       })
 
-    send(Pushest.Socket, {:gun_ws, self(), {:text, response}})
+    send(Pushest.Adapters.Socket, {:gun_ws, self(), {:text, response}})
 
     {:reply, :ok, state}
   end
@@ -146,7 +146,7 @@ defmodule Pushest.FakeClient do
             }
           })
 
-        send(Pushest.Socket, {:gun_ws, self(), {:text, response}})
+        send(Pushest.Adapters.Socket, {:gun_ws, self(), {:text, response}})
 
       "pusher:unsubscribe" when fail_unsubscribe ->
         response =
@@ -158,7 +158,7 @@ defmodule Pushest.FakeClient do
             }
           })
 
-        send(Pushest.Socket, {:gun_ws, self(), {:text, response}})
+        send(Pushest.Adapters.Socket, {:gun_ws, self(), {:text, response}})
 
       _ ->
         nil

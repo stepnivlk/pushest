@@ -4,8 +4,10 @@ defmodule Pushest.Supervisor do
   for those modules.
   """
 
-  alias Pushest.{Api, Socket}
   use Supervisor
+
+  alias Pushest.Adapters.{Api, Socket}
+  alias Pushest.Data.Options
 
   @spec start_link(map, module, list) :: {:ok, pid} | {:error, term}
   def start_link(pusher_opts, callback_module, init_channels) do
@@ -41,14 +43,14 @@ defmodule Pushest.Supervisor do
     otp_app = Keyword.fetch!(opts, :otp_app)
     app_config = Application.get_env(otp_app, module, [])
 
-    pusher_config = %{
+    %Options{
       app_id: app_config[:pusher_app_id],
       key: app_config[:pusher_key],
       secret: app_config[:pusher_secret],
       cluster: app_config[:pusher_cluster],
-      encrypted: app_config[:pusher_encrypted]
+      encrypted: app_config[:pusher_encrypted],
+      api_adapter: app_config[:api_adapter] || Api,
+      socket_adapter: app_config[:socket_adapter] || Socket
     }
-
-    pusher_config
   end
 end

@@ -44,8 +44,8 @@ defmodule PushestTest do
     {:ok, test_pushest_pid} = TestPushest.start_link(@pusher_config)
     Application.ensure_all_started(:pushest)
 
-    api_pid = child_pid(Pushest.Api)
-    socket_pid = child_pid(Pushest.Socket)
+    api_pid = child_pid(Pushest.Adapters.Api)
+    socket_pid = child_pid(Pushest.Adapters.Socket)
 
     FakeClient.establish_connection()
 

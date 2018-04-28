@@ -1,4 +1,4 @@
-defmodule Pushest.Socket do
+defmodule Pushest.Adapters.Socket do
   @moduledoc ~S"""
   GenServer responsible for communication with Pusher via WebSockets.
   This module is meant to be used internally as part of the Pushest application.
@@ -8,9 +8,11 @@ defmodule Pushest.Socket do
 
   use GenServer
 
-  alias __MODULE__.Utils
-  alias __MODULE__.Data.{State, Frame, Url, Presence, SocketInfo}
+  alias Pushest.Socket.Utils
+  alias Pushest.Socket.Data.{State, Frame, Url, Presence, SocketInfo}
   alias Pushest.Data.Options
+
+  @behaviour Pushest.Adapter
 
   @client Pushest.Client.for_env()
 
@@ -24,6 +26,14 @@ defmodule Pushest.Socket do
       init_state(opts),
       name: __MODULE__
     )
+  end
+
+  def call(command) do
+    GenServer.call(__MODULE__, command)
+  end
+
+  def cast(command) do
+    GenServer.cast(__MODULE__, command)
   end
 
   ## ==========================================================================

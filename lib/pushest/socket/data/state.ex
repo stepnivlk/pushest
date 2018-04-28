@@ -9,15 +9,15 @@ defmodule Pushest.Socket.Data.State do
   @type init_channel :: [name: String.t(), user_data: map]
 
   @type t :: %__MODULE__{
-    url: %Url{},
-    options: %Options{},
-    socket_info: %SocketInfo{},
-    channels: list(string),
-    presence: %Presence{},
-    conn_pid: pid | nil,
-    callback_module: module | nil,
-    init_channels: list(init_channel)
-  }
+          url: %Url{},
+          options: %Options{},
+          socket_info: %SocketInfo{},
+          channels: list(String.t()),
+          presence: %Presence{},
+          conn_pid: pid | nil,
+          callback_module: module | nil,
+          init_channels: list(init_channel)
+        }
 
   defstruct url: %Url{},
             options: %Options{},
