@@ -80,7 +80,10 @@ defmodule Pushest.Socket.Utils do
          user_data
        ) do
     signed = string_to_sign(socket_id, channel, user_data)
-    signature = :crypto.hmac(:sha256, secret, signed) |> Base.encode16(case: :lower)
+
+    signature =
+      :crypto.hmac(:sha256, secret, signed)
+      |> Base.encode16(case: :lower)
 
     "#{key}:#{signature}"
   end

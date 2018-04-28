@@ -22,6 +22,7 @@ defmodule Pushest.Socket.Data.FrameTest do
         channel: nil
       }
 
+      # credo:disable-for-lines:4
       expected_frame =
         "{\"event\":\"pusher:subscribe\",\"data\":{\"channel_data\":\"{\\\"user_info\\\":{" <>
           "\\\"name\\\":\\\"Tomas Koutsky\\\",\\\"email\\\":\\\"secret@secret.com\\\"}," <>

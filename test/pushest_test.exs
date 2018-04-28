@@ -6,6 +6,8 @@ defmodule PushestTest do
 
   import ExUnit.CaptureLog
 
+  alias Mix.Project
+
   alias Pushest.FakeClient
 
   defmodule TestPushest do
@@ -87,6 +89,7 @@ defmodule PushestTest do
 
       {:ok, frame} = FakeClient.last_frame()
 
+      # credo:disable-for-next-line
       assert frame[:payload] ==
                ~s({"event":"pusher:subscribe","data":{"channel_data":"{}","channel":"test-channel","auth":null},"channel":null})
 
@@ -131,6 +134,7 @@ defmodule PushestTest do
 
       {:ok, frame} = FakeClient.last_frame()
 
+      # credo:disable-for-lines:4
       assert frame[:payload] ==
                "{\"event\":\"pusher:subscribe\",\"data\":{\"channel_data\":\"{\\\"user_id\\\":\\\"1\\\"}\",\"channel\":\"#{
                  @channel
@@ -183,6 +187,7 @@ defmodule PushestTest do
 
       assert frame[:via] == :api
 
+      # credo:disable-for-lines:4
       assert frame[:payload] ==
                "{\"name\":\"event\",\"data\":\"{\\\"message\\\":\\\"message\\\"}\",\"channel\":\"#{
                  @channel
@@ -210,17 +215,19 @@ defmodule PushestTest do
 
       assert frame[:via] == :api
 
+      # credo:disable-for-lines:4
       assert frame[:payload] ==
                "{\"name\":\"event\",\"data\":\"{\\\"message\\\":\\\"message\\\"}\",\"channel\":\"#{
                  @channel
                }\"}"
 
+      # credo:disable-for-lines:2
       assert frame[:path] ==
                '/apps/PUSHER_APP_ID/events?auth_key=PUSHER_APP_KEY&auth_timestamp=123&auth_version=1.0&body_md5=d1f9b8b45be3308f990149da9e0a5868&auth_signature=98b6de3c177e917375dc4e8a7cca9d2fb2be5cdd9fe61b0231853211cc0a452c'
 
       assert frame[:headers] == [
                {"content-type", "application/json"},
-               {"X-Pusher-Library", "Pushest #{Mix.Project.config()[:version]}"}
+               {"X-Pusher-Library", "Pushest #{Project.config()[:version]}"}
              ]
     end
   end
@@ -237,17 +244,19 @@ defmodule PushestTest do
 
       assert frame[:via] == :api
 
+      # credo:disable-for-lines:4
       assert frame[:payload] ==
                "{\"name\":\"event\",\"data\":\"{\\\"message\\\":\\\"message\\\"}\",\"channel\":\"#{
                  @channel
                }\"}"
 
+      # credo:disable-for-lines:2
       assert frame[:path] ==
                '/apps/PUSHER_APP_ID/events?auth_key=PUSHER_APP_KEY&auth_timestamp=123&auth_version=1.0&body_md5=5ffd220c430c1e3e171458c14e9c3be9&auth_signature=ac41c93da2ae66aece34518f92b27386b92e19b628e78e2384460057c299f4ba'
 
       assert frame[:headers] == [
                {"content-type", "application/json"},
-               {"X-Pusher-Library", "Pushest #{Mix.Project.config()[:version]}"}
+               {"X-Pusher-Library", "Pushest #{Project.config()[:version]}"}
              ]
     end
   end
@@ -268,11 +277,12 @@ defmodule PushestTest do
 
       assert frame[:via] == :api
 
+      # credo:disable-for-lines:2
       assert frame[:path] ==
                '/apps/PUSHER_APP_ID/channels?auth_key=PUSHER_APP_KEY&auth_timestamp=123&auth_version=1.0&body_md5=d41d8cd98f00b204e9800998ecf8427e&auth_signature=fc8411aa6951f2065c7e56ed91a465dc2666efc2e8d756dd1c1024e6c3cfe7ab'
 
       assert frame[:headers] == [
-               {"X-Pusher-Library", "Pushest #{Mix.Project.config()[:version]}"}
+               {"X-Pusher-Library", "Pushest #{Project.config()[:version]}"}
              ]
     end
   end

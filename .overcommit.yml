@@ -2,6 +2,7 @@ PreCommit:
   Credo:
     enabled: true
     on_warn: fail
+    command: ['mix', 'credo']
   TrailingWhitespace:
     enabled: true
     on_warn: fail

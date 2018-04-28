@@ -3,7 +3,7 @@ defmodule Pushest.FakeClient do
 
   use GenServer
 
-  def start_link() do
+  def start_link do
     GenServer.start_link(
       __MODULE__,
       %{
@@ -86,7 +86,11 @@ defmodule Pushest.FakeClient do
   end
 
   def handle_call(:reset_presence, _from, state) do
-    {:reply, :ok, Map.merge(state, %{presence: %{count: 0, hash: %{}, ids: []}})}
+    {
+      :reply,
+      :ok,
+      Map.merge(state, %{presence: %{count: 0, hash: %{}, ids: []}})
+    }
   end
 
   def handle_call(:await_up, _from, state = %{await_up: status}) do

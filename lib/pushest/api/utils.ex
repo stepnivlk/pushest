@@ -38,7 +38,12 @@ defmodule Pushest.Api.Utils do
       iex> Pushest.Api.Utils.full_path("GET", "events", %{app_id: "app_id", key: "key", secret: "secret"})
       "/apps/app_id/events?auth_key=key&auth_timestamp=123&auth_version=1.0&body_md5=d41d8cd98f00b204e9800998ecf8427e&auth_signature=7e4ff0027ba406a0c638ee08967c9d6e8d2e2485020e31a25118b57f5b50239a"
   """
-  def full_path(verb, path, %{app_id: app_id, key: key, secret: secret}, frame \\ "") do
+  def full_path(
+        verb,
+        path,
+        %{app_id: app_id, key: key, secret: secret},
+        frame \\ ""
+      ) do
     auth_timestamp = Timestamp.for_env()
 
     frame_md5 = :crypto.hash(:md5, frame) |> Base.encode16(case: :lower)
@@ -49,7 +54,9 @@ defmodule Pushest.Api.Utils do
         "auth_timestamp=#{auth_timestamp}&" <>
         "auth_version=#{@auth_version}&" <> "body_md5=#{frame_md5}"
 
-    auth_signature = :crypto.hmac(:sha256, secret, string_to_sign) |> Base.encode16(case: :lower)
+    auth_signature =
+      :crypto.hmac(:sha256, secret, string_to_sign)
+      |> Base.encode16(case: :lower)
 
     "/apps/#{app_id}/#{path}?" <>
       "auth_key=#{key}&" <>

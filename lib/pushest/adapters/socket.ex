@@ -143,20 +143,31 @@ defmodule Pushest.Adapters.Socket do
       "pusher_internal:subscription_succeeded" ->
         Logger.debug("Socket | pusher_internal:subscription_succeeded")
         presence = Presence.merge(presence, frame.data["presence"])
-        {:noreply, %{state | channels: [frame.channel | channels], presence: presence}}
+
+        {
+          :noreply,
+          %{state | channels: [frame.channel | channels], presence: presence}
+        }
 
       "pusher_internal:member_added" ->
         Logger.debug("Socket | pusher_internal:member_added")
-        {:noreply, %{state | presence: Presence.add_member(presence, frame.data)}}
+
+        {
+          :noreply,
+          %{state | presence: Presence.add_member(presence, frame.data)}
+        }
 
       "pusher_internal:member_removed" ->
         Logger.debug("Socket | pusher_internal:member_removed")
-        {:noreply, %{state | presence: Presence.remove_member(presence, frame.data)}}
+
+        {
+          :noreply,
+          %{state | presence: Presence.remove_member(presence, frame.data)}
+        }
 
       "pusher:error" ->
         message = Map.get(frame.data, "message")
         Logger.error(fn -> "Socket | pusher:error #{inspect(message)}" end)
-
         Pushest.Utils.try_callback(callback_module, :handle_event, [{:error, message}, frame])
         {:noreply, state}
 
